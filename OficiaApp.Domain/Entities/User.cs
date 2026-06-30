@@ -9,6 +9,9 @@ public class User : BaseEntity
 	public string PasswordHash { get; private set; }
 	public string Email { get; private set; }
 
+	public ClientProfile? ClientProfile { get; private set; }
+	public ProfessionalProfile? ProfessionalProfile { get; private set; }
+
     public User(string username, string passwordHash, string email) : base()
 	{
 		Username = username;

@@ -4,12 +4,12 @@ namespace OficiaApp.Domain.Common;
 
 public abstract class BaseEntity
 {
-    public Guid ID { get; protected set; }
+    public Guid Id { get; protected set; }
     public DateTime FechaCreacion { get; protected set; }
 
     protected BaseEntity()
 	{
-		ID = Guid.NewGuid();
+		Id = Guid.NewGuid();
 		FechaCreacion = DateTime.UtcNow;
     }
 
