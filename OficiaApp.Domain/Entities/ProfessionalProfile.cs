@@ -10,6 +10,23 @@ public class ProfessionalProfile : BaseEntity
 	public string Bio { get; private set; }
 	public int YearsOfExperience { get; private set; }
 	public decimal HourlyRate { get; private set; }
+
+	private readonly List<Category> _categories = new List<Category>();
+	public IReadOnlyCollection<Category> Categories => _categories.AsReadOnly();
+
+	public void AddCategory(Category category)
+	{
+		if (category == null)
+		{
+			throw new ArgumentNullException(nameof(category), "Category cannot be null.");
+        }
+		if (_categories.Contains(category))
+        {
+			return;
+        }
+        _categories.Add(category);
+	}
+
     public ProfessionalProfile(Guid userId, string bio, int yearsOfExperience, decimal hourlyRate) : base()
 	{
 		UserId = userId;
