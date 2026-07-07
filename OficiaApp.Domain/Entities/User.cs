@@ -1,5 +1,4 @@
-﻿using System;
-using OficiaApp.Domain.Common;
+﻿using OficiaApp.Domain.Common;
 
 namespace OficiaApp.Domain.Entities;
 
@@ -18,6 +17,11 @@ public class User : BaseEntity
 		PasswordHash = passwordHash;
 		Email = email;
 	}
+
+	private User() : base()
+	{
+        // Required by EF Core
+    }
 
 
 }
