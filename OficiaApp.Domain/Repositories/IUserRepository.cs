@@ -7,5 +7,8 @@ namespace OficiaApp.Domain.Repositories
         Task<User?> GetUserByEmailAsync(string email);
 
         Task AddUserAsync(User user);
+
+        Task<User?> GetByIdAsync(Guid id);
+        Task UpdateAsync(User user);
     }
 }

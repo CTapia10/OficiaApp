@@ -23,5 +23,9 @@ public class User : BaseEntity
         // Required by EF Core
     }
 
+	public void SetProfessionalProfile(ProfessionalProfile professionalProfile)
+	{
+		ProfessionalProfile = professionalProfile;
+    }
 
 }
