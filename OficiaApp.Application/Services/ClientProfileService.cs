@@ -4,29 +4,29 @@ using OficiaApp.Domain.Repositories;
 
 namespace OficiaApp.Application.Services
 {
-    public class ProfessionalProfileService : IProfessionalProfileService
+    public class ClientProfileService : IClientProfileService
     {
         private readonly IUserRepository _userRepository;
-        public ProfessionalProfileService(IUserRepository userRepository)
+        public ClientProfileService(IUserRepository userRepository)
         {
             _userRepository = userRepository;
         }
-
-        public async Task CreateProfileAsync(Guid userId, CreateProfessionalProfileDto dto)
+        public async Task CreateClientProfileAsync(Guid userId, CreateClientProfileDto dto)
         {
             var user = await _userRepository.GetByIdAsync(userId);
             if (user == null)
             {
                 throw new ArgumentException("User not found", nameof(userId));
             }
-            if (user.ProfessionalProfile != null)
+            if (user.ClientProfile != null)
             {
-                throw new InvalidOperationException("User already has a professional profile");
+                throw new InvalidOperationException("User already has a client profile");
             }
-            ProfessionalProfile professionalProfile = new ProfessionalProfile(userId, dto.Bio, dto.YearsOfExperience, dto.HourlyRate);
-            user.SetProfessionalProfile(professionalProfile);
+            ClientProfile clientProfile = new ClientProfile(userId, dto.PhoneNumber);
+            user.SetClientProfile(clientProfile);
             await _userRepository.UpdateAsync(user);
 
         }
+
     }
 }

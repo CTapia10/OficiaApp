@@ -8,7 +8,6 @@ namespace OficiaApp.Infrastructure.Repositories
 
     public class UserRepository : IUserRepository
     {
-        
         private readonly ApplicationDbContext _context;
 
         public UserRepository(ApplicationDbContext context)
@@ -37,8 +36,8 @@ namespace OficiaApp.Infrastructure.Repositories
         {
             return await _context.Users
                 .Include(u => u.ProfessionalProfile)
+                .Include(u => u.ClientProfile)
                 .FirstOrDefaultAsync(u => u.Id == id);
         }
-
     }
 }
