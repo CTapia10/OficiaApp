@@ -13,8 +13,14 @@ public class ProfessionalProfile : BaseEntity
 
 	private readonly List<Category> _categories = new List<Category>();
 	public IReadOnlyCollection<Category> Categories => _categories.AsReadOnly();
-
-	public void AddCategory(Category category)
+    public ProfessionalProfile(Guid userId, string bio, int yearsOfExperience, decimal hourlyRate) : base()
+    {
+        UserId = userId;
+        Bio = bio;
+        YearsOfExperience = yearsOfExperience;
+        HourlyRate = hourlyRate;
+    }
+    public void AddCategory(Category category)
 	{
 		if (category == null)
 		{
@@ -25,13 +31,5 @@ public class ProfessionalProfile : BaseEntity
 			return;
         }
         _categories.Add(category);
-	}
-
-    public ProfessionalProfile(Guid userId, string bio, int yearsOfExperience, decimal hourlyRate) : base()
-	{
-		UserId = userId;
-		Bio = bio;
-		YearsOfExperience = yearsOfExperience;
-		HourlyRate = hourlyRate;
 	}
 }

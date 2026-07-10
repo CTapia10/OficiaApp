@@ -36,8 +36,10 @@ namespace OficiaApp.Infrastructure.Repositories
         {
             return await _context.Users
                 .Include(u => u.ProfessionalProfile)
+                    .ThenInclude(p => p.Categories)
                 .Include(u => u.ClientProfile)
                 .FirstOrDefaultAsync(u => u.Id == id);
+
         }
     }
 }
