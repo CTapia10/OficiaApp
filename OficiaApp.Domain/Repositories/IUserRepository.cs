@@ -10,5 +10,6 @@ namespace OficiaApp.Domain.Repositories
 
         Task<User?> GetByIdAsync(Guid id);
         Task UpdateAsync(User user);
+        Task<IEnumerable<User>> SearchProfessionalsAsync(Guid? categoryId, decimal? maxHourlyRate);
     }
 }

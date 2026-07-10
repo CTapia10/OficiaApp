@@ -41,5 +41,26 @@ namespace OficiaApp.Infrastructure.Repositories
                 .FirstOrDefaultAsync(u => u.Id == id);
 
         }
+
+        public async Task<IEnumerable<User>> SearchProfessionalsAsync(Guid? categoryId, decimal? maxHourlyRate)
+        {
+            var query = _context.Users
+                .Include(u => u.ProfessionalProfile)
+                    .ThenInclude(p => p.Categories)
+                .Where(u => u.ProfessionalProfile != null) // <-- ESTO ES CLAVE
+                .AsNoTracking();
+
+            if (categoryId.HasValue)
+            {
+                query = query.Where(u => u.ProfessionalProfile!.Categories.Any(c => c.Id == categoryId.Value));
+            }
+
+            if (maxHourlyRate.HasValue)
+            {
+                query = query.Where(u => u.ProfessionalProfile!.HourlyRate <= maxHourlyRate.Value);
+            }
+
+            return await query.ToListAsync();
+        }
     }
 }

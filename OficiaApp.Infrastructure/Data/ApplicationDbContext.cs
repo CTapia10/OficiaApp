@@ -21,6 +21,7 @@ public class ApplicationDbContext : DbContext
     {
         // Entity framework configurations
         base.OnModelCreating(modelBuilder);
+
         modelBuilder.Entity<JobContract>()
             .Property(j => j.AgreedPrice)
             .HasColumnType("decimal(18,2)");
