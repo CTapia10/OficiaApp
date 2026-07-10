@@ -35,5 +35,9 @@ public class ApplicationDbContext : DbContext
             .HasForeignKey(j => j.ProfessionalProfileId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        modelBuilder.Entity<ProfessionalProfile>()
+            .HasMany(p => p.Categories)
+            .WithMany(c => c.ProfessionalProfiles)
+            .UsingEntity(j => j.ToTable("ProfessionalProfileCategories"));
     }
 }
