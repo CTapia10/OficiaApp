@@ -7,9 +7,11 @@ namespace OficiaApp.Application.Services
     public class ProfessionalProfileService : IProfessionalProfileService
     {
         private readonly IUserRepository _userRepository;
-        public ProfessionalProfileService(IUserRepository userRepository)
+        private readonly ICategoryRepository _categoryRepository;
+        public ProfessionalProfileService(IUserRepository userRepository, ICategoryRepository categoryRepository)
         {
             _userRepository = userRepository;
+            _categoryRepository = categoryRepository;
         }
 
         public async Task CreateProfileAsync(Guid userId, CreateProfessionalProfileDto dto)
@@ -27,6 +29,26 @@ namespace OficiaApp.Application.Services
             user.SetProfessionalProfile(professionalProfile);
             await _userRepository.UpdateAsync(user);
 
+        }
+
+        public async Task AddCategoryAsync(Guid userId, Guid categoryId)
+        {
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null)
+            {
+                throw new ArgumentException("User not found", nameof(userId));
+            }
+            if (user.ProfessionalProfile == null)
+            {
+                throw new InvalidOperationException("User does not have a professional profile");
+            }
+            var category = await _categoryRepository.GetByIdAsync(categoryId);
+            if (category == null)
+            {
+                throw new ArgumentException("Category not found", nameof(categoryId));
+            }
+            user.ProfessionalProfile.AddCategory(category);
+            await _userRepository.UpdateAsync(user);
         }
     }
 }
