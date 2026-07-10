@@ -40,5 +40,35 @@ namespace OficiaApp.Api.Controllers
                 return StatusCode(500, new { message = "An error occurred while creating the professional profile." });
             }
         }
+
+        [HttpPost("categories/{categoryId}")]
+        public async Task<IActionResult> AddCategory(Guid categoryId)
+        {
+            try
+            {
+                // Assuming the user ID is obtained from the authenticated user's claims
+                var userIdString = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (userIdString == null)
+                {
+                    return Unauthorized(new { message = "User ID not found in claims." });
+                }
+                Guid userId = Guid.Parse(userIdString);
+                await _professionalProfileService.AddCategoryAsync(userId, categoryId);
+                return Ok(new { message = "Category added to professional profile successfully." });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "An error occurred while adding the category to the professional profile." });
+            }
+        }
+
     }
 }
