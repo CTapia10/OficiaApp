@@ -50,5 +50,18 @@ namespace OficiaApp.Application.Services
             user.ProfessionalProfile.AddCategory(category);
             await _userRepository.UpdateAsync(user);
         }
+
+        public async Task<IEnumerable<ProfessionalResponseDto>> SearchProfessionalsAsync(Guid? categoryId, decimal? maxHourlyRate)
+        {
+            var users = await _userRepository.SearchProfessionalsAsync(categoryId, maxHourlyRate);
+            return users.Select(u => new ProfessionalResponseDto(
+            u.Id,
+            u.Username,
+            u.ProfessionalProfile!.Bio,
+            u.ProfessionalProfile.YearsOfExperience,
+            u.ProfessionalProfile.HourlyRate,
+            u.ProfessionalProfile.Categories.Select(c => c.Name) // Transforma la colección de Entidades en una colección de Strings
+        ));
+        }
     }
 }
