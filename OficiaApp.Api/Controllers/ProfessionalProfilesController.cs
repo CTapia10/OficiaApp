@@ -70,5 +70,19 @@ namespace OficiaApp.Api.Controllers
             }
         }
 
+        [HttpGet("search")]
+        public async Task<IActionResult> Search([FromQuery] Guid? categoryId, [FromQuery] decimal? maxHourlyRate)
+        {
+            try
+            {
+                var results = await _professionalProfileService.SearchProfessionalsAsync(categoryId, maxHourlyRate);
+                return Ok(results);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "An error occurred while searching for professionals." });
+            }
+        }
+
     }
 }
