@@ -19,7 +19,7 @@ public class ApplicationDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // Reglas
+        // Entity framework configurations
         base.OnModelCreating(modelBuilder);
         modelBuilder.Entity<JobContract>()
             .Property(j => j.AgreedPrice)
