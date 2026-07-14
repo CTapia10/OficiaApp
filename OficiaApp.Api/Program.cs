@@ -12,7 +12,21 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Inyección de Dependencias (El "Catálogo" de herramientas)
+// 1. Read allowed origins from appsettings
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+
+// 2. Configure CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins(allowedOrigins)
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
+// Inyeccion de Dependencias (El "Catalogo" de herramientas)
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>(); // <-- 3. Registrar el Cerebro de la App
 builder.Services.AddScoped<IProfessionalProfileService, ProfessionalProfileService>();
@@ -27,6 +41,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// 3. Use CORS
+app.UseCors("AllowFrontend");
 
 app.MapControllers(); // <-- Enrutar las peticiones web hacia los Controladores
 
