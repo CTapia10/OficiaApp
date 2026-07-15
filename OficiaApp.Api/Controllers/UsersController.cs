@@ -31,5 +31,23 @@ namespace OficiaApp.Api.Controllers
                 return StatusCode(500, new { message = "An error occurred while registering the user." });
             }
         }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginUserDto loginUserDto)
+        {
+            try
+            {
+                var authResponse = await _userService.LoginAsync(loginUserDto);
+                return Ok(authResponse);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "An error occurred while logging in." });
+            }
+        }
     }
 }

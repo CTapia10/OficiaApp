@@ -5,5 +5,6 @@ namespace OficiaApp.Application.Services
     public interface IUserService
     {
         Task RegisterUserAsync(RegisterUserDto registerUserDto);
+        Task<AuthResponseDto> LoginAsync(LoginUserDto loginUserDto);
     }
 }
