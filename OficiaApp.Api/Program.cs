@@ -2,7 +2,8 @@ using OficiaApp.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using OficiaApp.Domain.Repositories;
 using OficiaApp.Infrastructure.Repositories;
-using OficiaApp.Application.Services;   
+using OficiaApp.Application.Services;
+using OficiaApp.Application.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -52,12 +53,15 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+
 // Inyeccion de Dependencias (El "Catalogo" de herramientas)
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>(); // <-- 3. Registrar el Cerebro de la App
 builder.Services.AddScoped<IProfessionalProfileService, ProfessionalProfileService>();
 builder.Services.AddScoped<IClientProfileService, ClientProfileService>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<ITokenService, TokenService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
