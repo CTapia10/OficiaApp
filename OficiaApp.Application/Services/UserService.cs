@@ -1,6 +1,6 @@
 ﻿using OficiaApp.Application.DTOs;
 using OficiaApp.Domain.Entities;
-using OficiaApp.Domain.Repositories;
+using OficiaApp.Domain.Repositories;    
 using BCrypt.Net;
 
 namespace OficiaApp.Application.Services

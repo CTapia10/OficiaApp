@@ -10,7 +10,7 @@ Marketplace de oficios tipo Red Social Laboral. La experiencia de usuario debe s
 - **Infrastructure:** EF Core, SQL Server, Fluent API (`.UsingEntity`), Patrón Repositorio (`UserRepository`, `CategoryRepository`). Carga Ansiosa (`.Include`, `.ThenInclude`), consultas dinámicas de alto rendimiento (`.AsNoTracking()`, `IQueryable`) y Base de Datos sincronizada vía Migraciones.
 - **Application:** DTOs inmutables de entrada y salida (`record`), mapeo de datos con LINQ (`.Select()`), servicios con reglas de negocio estrictas (`UserService`, `ProfessionalProfileService`, `ClientProfileService`), encriptación (BCrypt) y emisión JWT (`ITokenService` / `TokenService` con `IOptions<JwtSettings>`).
 - **API:** Controladores RESTful (`UsersController`, etc.), inyección de dependencias (Scoped), manejo de Query Strings (`[FromQuery]`). CORS configurado (`AllowFrontend` → `localhost:3000`). JWT Bearer registrado en `Program.cs` (`AddAuthentication` + `AddJwtBearer` + middleware `UseAuthentication` / `UseAuthorization`).
-- **Último hito backend:** Sprint 12 — Tarea 12.3 completada (`POST /api/users/login`, DTOs, `UserService.LoginAsync` con BCrypt + JWT). Pendiente validación E2E (12.4).
+- **Último hito backend:** Sprint 12 cerrado — JWT E2E OK (register → login → Bearer en `[Authorize]`). Fix de persistencia: `UserRepository.UpdateAsync` evita `Users.Update` y fuerza `Added` en dependientes nuevos (Guid en `BaseEntity`).
 
 ### Track Frontend (esqueleto UI listo):
 - **Stack:** Next.js (React) + TypeScript.
@@ -29,9 +29,9 @@ Marketplace de oficios tipo Red Social Laboral. La experiencia de usuario debe s
 ## 3. HISTORIAL DE SPRINTS
 - ✅ **Sprints 1 al 11 (Backend Base):** Clean Architecture, Dominio, Repositorios, Servicios (SRP). Registro, perfiles, oficios N:M, search.
 - ✅ **Frontend skeleton (v0):** Maquetación de los 3 pilares + perfil/solicitudes con datos mock.
-- 🔄 **Sprint 12 (EN CURSO) — Autenticación JWT (Backend):** Desbloquear `[Authorize]` y habilitar login/token para perfiles y futuros flujos.
+- ✅ **Sprint 12 — Autenticación JWT (Backend):** Config JWT, TokenService, login, validación E2E con Bearer + fix EF tracking de perfiles.
 
-## 4. FOCO ACTUAL: SPRINT 12 — Autenticación JWT
+## 4. FOCO ACTUAL: Sprint 12 ✅ — Autenticación JWT (cerrado)
 
 **Objetivo del sprint:** Emitir y validar JWT para que los endpoints protegidos funcionen de extremo a extremo.
 
@@ -39,7 +39,7 @@ Marketplace de oficios tipo Red Social Laboral. La experiencia de usuario debe s
 - [x] **12.1** Configurar JWT en API (`JwtSettings`, paquete JwtBearer 9.0.14, `AddAuthentication`/`AddJwtBearer`, middleware).
 - [x] **12.2** Crear `ITokenService` / `TokenService` en Application, `JwtSettings` tipado, paquetes JWT, registro en DI.
 - [x] **12.3** Endpoint `POST /api/users/login` + DTOs (`LoginUserDto`, `AuthResponseDto`) + `UserService.LoginAsync` (BCrypt verify + generar token).
-- [ ] **12.4** ← **SIGUIENTE** — Validar flujo: register → login → llamar endpoint `[Authorize]` con Bearer token.
+- [x] **12.4** Validar flujo: register → login → llamar endpoint `[Authorize]` con Bearer token (+ fix persistencia perfiles).
 
 ## 5. PRÓXIMOS PASOS (Backlog post-Sprint 12)
 - Sprint 13: Explorar — `GET /api/categories`, enriquecer DTO de pros, search público.

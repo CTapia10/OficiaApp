@@ -28,8 +28,39 @@ namespace OficiaApp.Infrastructure.Repositories
 
         public async Task UpdateAsync(User user)
         {
-            _context.Users.Update(user);
+            // User is already tracked after GetByIdAsync — do not call Users.Update(user).
+            // BaseEntity assigns Id = Guid.NewGuid() in the ctor, so EF often tracks brand-new
+            // dependents as Modified (UPDATE) instead of Added (INSERT). Force Added when missing in DB.
+            await EnsureNewDependentIsInsertedAsync(user.ClientProfile);
+            await EnsureNewDependentIsInsertedAsync(user.ProfessionalProfile);
+
             await _context.SaveChangesAsync();
+        }
+
+        private async Task EnsureNewDependentIsInsertedAsync<TEntity>(TEntity? entity) where TEntity : class
+        {
+            if (entity is null)
+            {
+                return;
+            }
+
+            var entry = _context.Entry(entity);
+            if (entry.State == EntityState.Added)
+            {
+                return;
+            }
+
+            if (entry.State == EntityState.Detached)
+            {
+                _context.Set<TEntity>().Add(entity);
+                return;
+            }
+
+            var databaseValues = await entry.GetDatabaseValuesAsync();
+            if (databaseValues is null)
+            {
+                entry.State = EntityState.Added;
+            }
         }
 
         public async Task<User?> GetByIdAsync(Guid id)
