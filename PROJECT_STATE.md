@@ -10,7 +10,7 @@ Marketplace de oficios tipo Red Social Laboral. La experiencia de usuario debe s
 - **Infrastructure:** EF Core, SQL Server, Fluent API (`.UsingEntity`), Patrón Repositorio (`UserRepository`, `CategoryRepository`). Carga Ansiosa (`.Include`, `.ThenInclude`), consultas dinámicas de alto rendimiento (`.AsNoTracking()`, `IQueryable`) y Base de Datos sincronizada vía Migraciones.
 - **Application:** DTOs inmutables de entrada y salida (`record`), mapeo de datos con LINQ (`.Select()`), servicios con reglas de negocio estrictas (`UserService`, `ProfessionalProfileService`, `ClientProfileService`), encriptación (BCrypt) y emisión JWT (`ITokenService` / `TokenService` con `IOptions<JwtSettings>`).
 - **API:** Controladores RESTful (`UsersController`, etc.), inyección de dependencias (Scoped), manejo de Query Strings (`[FromQuery]`). CORS configurado (`AllowFrontend` → `localhost:3000`). JWT Bearer registrado en `Program.cs` (`AddAuthentication` + `AddJwtBearer` + middleware `UseAuthentication` / `UseAuthorization`).
-- **Último hito backend:** Sprint 13.1 — `GET /api/categories` público (DTO + `CategoryService` + `GetAllAsync` con `AsNoTracking`).
+- **Último hito backend:** Sprint 13.2 — `ExploreProfessionalDto` + `CategorySummaryDto` (Id/Name) para cards de Explorar.
 
 ### Track Frontend (esqueleto UI listo):
 - **Stack:** Next.js (React) + TypeScript.
@@ -23,6 +23,7 @@ Marketplace de oficios tipo Red Social Laboral. La experiencia de usuario debe s
 - JWT: sección `JwtSettings` (`SecretKey` ≥ 32 chars, `Issuer`, `Audience`, `ExpirationInMinutes`) en `appsettings.Development.json`; clase tipada `JwtSettings` en Application (`Settings/JwtSettings.cs`), bindeada vía `Configure<JwtSettings>` en `Program.cs`.
 - Pipeline API: `UseCors` → `UseAuthentication` → `UseAuthorization` → `MapControllers`.
 - Roadmap backend → UI: Auth JWT → Explorar → Radar → Feed → integración frontend.
+- **Git al cerrar tarea:** el agente solo sugiere `git commit -m "..."` (Conventional Commits, mensaje en inglés). **No** incluir `git add`; el staging lo hace el desarrollador.
 
 ---
 
@@ -37,7 +38,7 @@ Marketplace de oficios tipo Red Social Laboral. La experiencia de usuario debe s
 
 ### Tareas:
 - [x] **13.1** `GET /api/categories` — DTO + service + repo `GetAll` + controlador público.
-- [ ] **13.2** Enriquecer DTO de profesionales para cards de Explorar.
+- [x] **13.2** Enriquecer DTO de profesionales para cards de Explorar (`ExploreProfessionalDto`, categorías con Id+Name).
 - [ ] **13.3** Search público con filtros (`[FromQuery]`).
 
 ## 5. PRÓXIMOS PASOS (Backlog post-Sprint 13)

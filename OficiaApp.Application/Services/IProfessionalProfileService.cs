@@ -6,6 +6,6 @@ namespace OficiaApp.Application.Services
     {
         Task CreateProfileAsync(Guid userId, CreateProfessionalProfileDto dto);
         Task AddCategoryAsync(Guid userId, Guid categoryId);
-        Task<IEnumerable<ProfessionalResponseDto>> SearchProfessionalsAsync(Guid? categoryId, decimal? maxHourlyRate);
+        Task<IEnumerable<ExploreProfessionalDto>> SearchProfessionalsAsync(Guid? categoryId, decimal? maxHourlyRate);
     }
 }

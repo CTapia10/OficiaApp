@@ -51,17 +51,10 @@ namespace OficiaApp.Application.Services
             await _userRepository.UpdateAsync(user);
         }
 
-        public async Task<IEnumerable<ProfessionalResponseDto>> SearchProfessionalsAsync(Guid? categoryId, decimal? maxHourlyRate)
+        public async Task<IEnumerable<ExploreProfessionalDto>> SearchProfessionalsAsync(Guid? categoryId, decimal? maxHourlyRate)
         {
             var users = await _userRepository.SearchProfessionalsAsync(categoryId, maxHourlyRate);
-            return users.Select(u => new ProfessionalResponseDto(
-            u.Id,
-            u.Username,
-            u.ProfessionalProfile!.Bio,
-            u.ProfessionalProfile.YearsOfExperience,
-            u.ProfessionalProfile.HourlyRate,
-            u.ProfessionalProfile.Categories.Select(c => c.Name) // Transforma la colección de Entidades en una colección de Strings
-        ));
+            return users.Select(u => new ExploreProfessionalDto(u.Id, u.ProfessionalProfile!.Id, u.Username, u.ProfessionalProfile!.Bio, u.ProfessionalProfile.YearsOfExperience, u.ProfessionalProfile.HourlyRate, u.ProfessionalProfile.Categories.Select(c => new CategorySummaryDto(c.Id, c.Name))));
         }
     }
 }
