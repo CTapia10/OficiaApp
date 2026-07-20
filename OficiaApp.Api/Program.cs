@@ -61,6 +61,7 @@ builder.Services.AddScoped<IUserService, UserService>(); // <-- 3. Registrar el 
 builder.Services.AddScoped<IProfessionalProfileService, ProfessionalProfileService>();
 builder.Services.AddScoped<IClientProfileService, ClientProfileService>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 var app = builder.Build();
 

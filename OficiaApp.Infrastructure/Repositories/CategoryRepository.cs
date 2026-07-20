@@ -12,9 +12,7 @@ namespace OficiaApp.Infrastructure.Repositories
         {
             _context = context;
         }
-        public async Task<Category?> GetByIdAsync(Guid id)
-        {
-            return await _context.Categories.FirstOrDefaultAsync(c => c.Id == id);
-        }
+        public async Task<Category?> GetByIdAsync(Guid id) => await _context.Categories.FirstOrDefaultAsync(c => c.Id == id);
+        public async Task<IEnumerable<Category>> GetAllAsync() => await _context.Categories.AsNoTracking().ToListAsync();
     }
 }
