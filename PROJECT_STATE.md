@@ -10,7 +10,7 @@ Marketplace de oficios tipo Red Social Laboral. La experiencia de usuario debe s
 - **Infrastructure:** EF Core, SQL Server, Fluent API (`.UsingEntity`), Patrón Repositorio (`UserRepository`, `CategoryRepository`). Carga Ansiosa (`.Include`, `.ThenInclude`), consultas dinámicas de alto rendimiento (`.AsNoTracking()`, `IQueryable`) y Base de Datos sincronizada vía Migraciones.
 - **Application:** DTOs inmutables de entrada y salida (`record`), mapeo de datos con LINQ (`.Select()`), servicios con reglas de negocio estrictas (`UserService`, `ProfessionalProfileService`, `ClientProfileService`), encriptación (BCrypt) y emisión JWT (`ITokenService` / `TokenService` con `IOptions<JwtSettings>`).
 - **API:** Controladores RESTful (`UsersController`, etc.), inyección de dependencias (Scoped), manejo de Query Strings (`[FromQuery]`). CORS configurado (`AllowFrontend` → `localhost:3000`). JWT Bearer registrado en `Program.cs` (`AddAuthentication` + `AddJwtBearer` + middleware `UseAuthentication` / `UseAuthorization`).
-- **Último hito backend:** Sprint 13.2 — `ExploreProfessionalDto` + `CategorySummaryDto` (Id/Name) para cards de Explorar.
+- **Último hito backend:** Sprint 13.3 — Search público de profesionales (`[AllowAnonymous]` sobre acción puntual, no en el controller).
 
 ### Track Frontend (esqueleto UI listo):
 - **Stack:** Next.js (React) + TypeScript.
@@ -39,9 +39,9 @@ Marketplace de oficios tipo Red Social Laboral. La experiencia de usuario debe s
 ### Tareas:
 - [x] **13.1** `GET /api/categories` — DTO + service + repo `GetAll` + controlador público.
 - [x] **13.2** Enriquecer DTO de profesionales para cards de Explorar (`ExploreProfessionalDto`, categorías con Id+Name).
-- [ ] **13.3** Search público con filtros (`[FromQuery]`).
+- [x] **13.3** Search público con filtros (`[FromQuery]`) — `GET /api/professional-profile/search` con `[AllowAnonymous]`.
 
-## 5. PRÓXIMOS PASOS (Backlog post-Sprint 13)
+## 5. SPRINT 13 CERRADO ✅ — PRÓXIMOS PASOS (Backlog)
 - Sprint 14: Radar — capa completa de `JobRequest` (Domain extendido + API).
 - Sprint 15: Feed inmersivo — entidad de posts + endpoint paginado.
 - Sprint 16: Integración Frontend — `.env.local`, `authService.ts`, TanStack Query en Explorar/Radar.

@@ -70,6 +70,7 @@ namespace OficiaApp.Api.Controllers
             }
         }
 
+        [AllowAnonymous]
         [HttpGet("search")]
         public async Task<IActionResult> Search([FromQuery] Guid? categoryId, [FromQuery] decimal? maxHourlyRate)
         {
