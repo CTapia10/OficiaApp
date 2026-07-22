@@ -1,6 +1,6 @@
 using OficiaApp.Application.DTOs;
 
-namespace OficiaApp.Application.Services;
+namespace OficiaApp.Application.Ports.In;
 
 public interface ICategoryService
 {

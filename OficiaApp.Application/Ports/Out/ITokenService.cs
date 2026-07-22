@@ -1,6 +1,6 @@
 using OficiaApp.Domain.Entities;
 
-namespace OficiaApp.Application.Services;
+namespace OficiaApp.Application.Ports.Out;
 
 public interface ITokenService
 {

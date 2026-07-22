@@ -3,16 +3,17 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using OficiaApp.Application.Ports.Out;
 using OficiaApp.Application.Settings;
 using OficiaApp.Domain.Entities;
 
-namespace OficiaApp.Application.Services;
+namespace OficiaApp.Infrastructure.Security;
 
-public class TokenService : ITokenService
+public class JwtTokenService : ITokenService
 {
     private readonly JwtSettings _jwtSettings;
 
-    public TokenService(IOptions<JwtSettings> jwtSettings)
+    public JwtTokenService(IOptions<JwtSettings> jwtSettings)
     {
         _jwtSettings = jwtSettings.Value;
     }

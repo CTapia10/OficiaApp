@@ -47,8 +47,9 @@ namespace OficiaApp.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("FechaCreacion")
-                        .HasColumnType("datetime2");
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("FechaCreacion");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -65,8 +66,9 @@ namespace OficiaApp.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTime>("FechaCreacion")
-                        .HasColumnType("datetime2");
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("FechaCreacion");
 
                     b.Property<string>("PhoneNumber")
                         .IsRequired()
@@ -92,8 +94,9 @@ namespace OficiaApp.Infrastructure.Migrations
                     b.Property<decimal>("AgreedPrice")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<DateTime>("FechaCreacion")
-                        .HasColumnType("datetime2");
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("FechaCreacion");
 
                     b.Property<Guid>("JobRequestId")
                         .HasColumnType("uniqueidentifier");
@@ -129,8 +132,9 @@ namespace OficiaApp.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("FechaCreacion")
-                        .HasColumnType("datetime2");
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("FechaCreacion");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
@@ -163,8 +167,9 @@ namespace OficiaApp.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("FechaCreacion")
-                        .HasColumnType("datetime2");
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("FechaCreacion");
 
                     b.Property<decimal>("HourlyRate")
                         .HasColumnType("decimal(18,2)");
@@ -193,8 +198,9 @@ namespace OficiaApp.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("FechaCreacion")
-                        .HasColumnType("datetime2");
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("FechaCreacion");
 
                     b.Property<Guid>("JobContractId")
                         .HasColumnType("uniqueidentifier");
@@ -219,8 +225,9 @@ namespace OficiaApp.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("FechaCreacion")
-                        .HasColumnType("datetime2");
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("FechaCreacion");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()

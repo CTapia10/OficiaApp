@@ -1,14 +1,15 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using OficiaApp.Domain.Common;
 using OficiaApp.Domain.Entities;
 
 namespace OficiaApp.Infrastructure.Data;
 
 public class ApplicationDbContext : DbContext
 {
-    // Constructor obligatorio para que ASP.NET pueda inyectarle la configuración (cadena de conexión)
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
     {
     }
+
     public DbSet<Category> Categories { get; set; }
     public DbSet<JobContract> JobContracts { get; set; }
     public DbSet<JobRequest> JobRequests { get; set; }
@@ -19,8 +20,17 @@ public class ApplicationDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // Entity framework configurations
         base.OnModelCreating(modelBuilder);
+
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            if (typeof(BaseEntity).IsAssignableFrom(entityType.ClrType))
+            {
+                modelBuilder.Entity(entityType.ClrType)
+                    .Property(nameof(BaseEntity.CreatedAt))
+                    .HasColumnName("FechaCreacion");
+            }
+        }
 
         modelBuilder.Entity<JobContract>()
             .Property(j => j.AgreedPrice)
@@ -29,7 +39,7 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<ProfessionalProfile>()
             .Property(p => p.HourlyRate)
             .HasColumnType("decimal(18,2)");
-        
+
         modelBuilder.Entity<JobContract>()
             .HasOne(j => j.ProfessionalProfile)
             .WithMany()
@@ -40,7 +50,7 @@ public class ApplicationDbContext : DbContext
             .HasMany(p => p.Categories)
             .WithMany(c => c.ProfessionalProfiles)
             .UsingEntity(j => j.ToTable("ProfessionalProfileCategories"));
-            
+
         modelBuilder.Entity<JobRequest>(e =>
         {
             // PrimitiveCollection (not Property) — required for List<string> migrations scaffolding in EF Core 9

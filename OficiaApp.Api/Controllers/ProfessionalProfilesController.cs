@@ -1,88 +1,86 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OficiaApp.Application.DTOs;
-using OficiaApp.Application.Services;
+using OficiaApp.Application.Ports.In;
 
-namespace OficiaApp.Api.Controllers
+namespace OficiaApp.Api.Controllers;
+
+[ApiController]
+[Authorize]
+[Route("api/professional-profile")]
+public class ProfessionalProfilesController : ControllerBase
 {
-    [ApiController]
-    [Authorize]
-    [Route("api/professional-profile")]
-    public class ProfessionalProfilesController : ControllerBase
+    private readonly IProfessionalProfileService _professionalProfileService;
+
+    public ProfessionalProfilesController(IProfessionalProfileService professionalProfileService)
     {
-        private readonly IProfessionalProfileService _professionalProfileService;
-        public ProfessionalProfilesController(IProfessionalProfileService professionalProfileService)
-        {
-            _professionalProfileService = professionalProfileService;
-        }
+        _professionalProfileService = professionalProfileService;
+    }
 
-        [HttpPost]
-        public async Task<IActionResult> CreateProfessionalProfile([FromBody] CreateProfessionalProfileDto createProfessionalProfileDto)
+    [HttpPost]
+    public async Task<IActionResult> CreateProfessionalProfile([FromBody] CreateProfessionalProfileDto createProfessionalProfileDto)
+    {
+        try
         {
-            try
+            var userIdString = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (userIdString == null)
             {
-                // Assuming the user ID is obtained from the authenticated user's claims
-                var userIdString = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-                if (userIdString == null)
-                {
-                    return Unauthorized(new { message = "User ID not found in claims." });
-                }
-                Guid userId = Guid.Parse(userIdString);
-                await _professionalProfileService.CreateProfileAsync(userId, createProfessionalProfileDto);
-                return Ok(new { message = "Professional profile created successfully." });
+                return Unauthorized(new { message = "User ID not found in claims." });
             }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (Exception)
-            {
-                return StatusCode(500, new { message = "An error occurred while creating the professional profile." });
-            }
+            var userId = Guid.Parse(userIdString);
+            await _professionalProfileService.CreateProfileAsync(userId, createProfessionalProfileDto);
+            return Ok(new { message = "Professional profile created successfully." });
         }
-
-        [HttpPost("categories/{categoryId}")]
-        public async Task<IActionResult> AddCategory(Guid categoryId)
+        catch (InvalidOperationException ex)
         {
-            try
-            {
-                // Assuming the user ID is obtained from the authenticated user's claims
-                var userIdString = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-                if (userIdString == null)
-                {
-                    return Unauthorized(new { message = "User ID not found in claims." });
-                }
-                Guid userId = Guid.Parse(userIdString);
-                await _professionalProfileService.AddCategoryAsync(userId, categoryId);
-                return Ok(new { message = "Category added to professional profile successfully." });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (ArgumentException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
-            catch (Exception)
-            {
-                return StatusCode(500, new { message = "An error occurred while adding the category to the professional profile." });
-            }
+            return BadRequest(new { message = ex.Message });
         }
-
-        [AllowAnonymous]
-        [HttpGet("search")]
-        public async Task<IActionResult> Search([FromQuery] Guid? categoryId, [FromQuery] decimal? maxHourlyRate)
+        catch (Exception)
         {
-            try
+            return StatusCode(500, new { message = "An error occurred while creating the professional profile." });
+        }
+    }
+
+    [HttpPost("categories/{categoryId}")]
+    public async Task<IActionResult> AddCategory(Guid categoryId)
+    {
+        try
+        {
+            var userIdString = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (userIdString == null)
             {
-                var results = await _professionalProfileService.SearchProfessionalsAsync(categoryId, maxHourlyRate);
-                return Ok(results);
+                return Unauthorized(new { message = "User ID not found in claims." });
             }
-            catch (Exception)
-            {
-                return StatusCode(500, new { message = "An error occurred while searching for professionals." });
-            }
+            var userId = Guid.Parse(userIdString);
+            await _professionalProfileService.AddCategoryAsync(userId, categoryId);
+            return Ok(new { message = "Category added to professional profile successfully." });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (ArgumentException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { message = "An error occurred while adding the category to the professional profile." });
+        }
+    }
+
+    [AllowAnonymous]
+    [HttpGet("search")]
+    public async Task<IActionResult> Search([FromQuery] Guid? categoryId, [FromQuery] decimal? maxHourlyRate)
+    {
+        try
+        {
+            var results = await _professionalProfileService.SearchProfessionalsAsync(categoryId, maxHourlyRate);
+            return Ok(results);
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { message = "An error occurred while searching for professionals." });
         }
     }
 }

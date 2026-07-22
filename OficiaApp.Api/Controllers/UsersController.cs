@@ -1,53 +1,53 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using OficiaApp.Application.DTOs;
-using OficiaApp.Application.Services;
+using OficiaApp.Application.Ports.In;
 
-namespace OficiaApp.Api.Controllers
+namespace OficiaApp.Api.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class UsersController : ControllerBase
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class UsersController : ControllerBase
+    private readonly IUserService _userService;
+
+    public UsersController(IUserService userService)
     {
-        private readonly IUserService _userService;
-        public UsersController(IUserService userService)
-        {
-            _userService = userService;
-        }
+        _userService = userService;
+    }
 
-        [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterUserDto registerUserDto)
+    [HttpPost("register")]
+    public async Task<IActionResult> Register([FromBody] RegisterUserDto registerUserDto)
+    {
+        try
         {
-            try
-            {
-                await _userService.RegisterUserAsync(registerUserDto);
-                return Ok(new { message = "User registered successfully." });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (Exception)
-            {
-                return StatusCode(500, new { message = "An error occurred while registering the user." });
-            }
+            await _userService.RegisterUserAsync(registerUserDto);
+            return Ok(new { message = "User registered successfully." });
         }
-
-        [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginUserDto loginUserDto)
+        catch (InvalidOperationException ex)
         {
-            try
-            {
-                var authResponse = await _userService.LoginAsync(loginUserDto);
-                return Ok(authResponse);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return Unauthorized(new { message = ex.Message });
-            }
-            catch (Exception)
-            {
-                return StatusCode(500, new { message = "An error occurred while logging in." });
-            }
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { message = "An error occurred while registering the user." });
+        }
+    }
+
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] LoginUserDto loginUserDto)
+    {
+        try
+        {
+            var authResponse = await _userService.LoginAsync(loginUserDto);
+            return Ok(authResponse);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { message = "An error occurred while logging in." });
         }
     }
 }
