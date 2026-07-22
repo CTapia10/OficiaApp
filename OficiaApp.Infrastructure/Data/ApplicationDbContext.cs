@@ -40,5 +40,12 @@ public class ApplicationDbContext : DbContext
             .HasMany(p => p.Categories)
             .WithMany(c => c.ProfessionalProfiles)
             .UsingEntity(j => j.ToTable("ProfessionalProfileCategories"));
+            
+        modelBuilder.Entity<JobRequest>(e =>
+        {
+            // PrimitiveCollection (not Property) — required for List<string> migrations scaffolding in EF Core 9
+            e.PrimitiveCollection<List<string>>("_imagesUrls")
+                .HasColumnName("ImageUrls");
+        });
     }
 }
