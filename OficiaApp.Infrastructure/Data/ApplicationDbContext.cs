@@ -17,6 +17,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<ProfessionalProfile> ProfessionalProfiles { get; set; }
     public DbSet<Review> Reviews { get; set; }
     public DbSet<User> Users { get; set; }
+    public DbSet<Post> Posts { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -36,15 +37,15 @@ public class ApplicationDbContext : DbContext
             .Property(j => j.AgreedPrice)
             .HasColumnType("decimal(18,2)");
 
-        modelBuilder.Entity<ProfessionalProfile>()
-            .Property(p => p.HourlyRate)
-            .HasColumnType("decimal(18,2)");
-
         modelBuilder.Entity<JobContract>()
             .HasOne(j => j.ProfessionalProfile)
             .WithMany()
             .HasForeignKey(j => j.ProfessionalProfileId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<ProfessionalProfile>()
+            .Property(p => p.HourlyRate)
+            .HasColumnType("decimal(18,2)");
 
         modelBuilder.Entity<ProfessionalProfile>()
             .HasMany(p => p.Categories)
@@ -57,5 +58,19 @@ public class ApplicationDbContext : DbContext
             e.PrimitiveCollection<List<string>>("_imagesUrls")
                 .HasColumnName("ImageUrls");
         });
+
+        modelBuilder.Entity<Post>()
+            .HasOne(p => p.ProfessionalProfile)
+            .WithMany()
+            .HasForeignKey(p => p.ProfessionalProfileId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Post>()
+            .Property(p => p.Caption)
+            .HasMaxLength(Post.CaptionMaxLength);
+
+        modelBuilder.Entity<Post>()
+            .Property(p => p.MediaUrl)
+            .HasMaxLength(Post.MediaUrlMaxLength);
     }
 }

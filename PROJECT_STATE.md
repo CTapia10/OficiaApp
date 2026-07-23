@@ -36,19 +36,20 @@ Marketplace de oficios tipo Red Social Laboral. La experiencia de usuario debe s
 - ✅ **Sprint 13 — Explorar (Backend):** `GET /api/categories`, `ExploreProfessionalDto`, search público `[AllowAnonymous]`.
 - ✅ **Sprint 14 — Radar (Backend / JobRequest):** Domain enriquecido + migración + Application Ports/UseCase + `JobRequestsController` (`POST /api/job-requests`, `GET /api/job-requests/open`).
 - ✅ **Refactor Hexagonal:** Ports In/Out, UseCases, security adapters, UoW, composition root, Domain hygiene.
+- ✅ **Sprint 15 — Feed inmersivo (Backend):** Domain (`Post` rico, cursor-based), Ports In/Out, `PostService`, `PostRepository` (paginación por cursor `CreatedAt`+`Id`), `PostsController` (`POST /api/posts` `[Authorize]`, `GET /api/posts/feed` `[AllowAnonymous]`), migración `AddPostEntity` aplicada.
 
 ## 4. FOCO ACTUAL: Sprint Fix / siguiente feature
 
-**Completado:** Hexagonal + Radar JobRequest (14.4–14.5).
+**Completado:** Hexagonal + Radar JobRequest (14.4–14.5) + Feed Post (Sprint 15).
 
 ### Próximo:
-- Validar vigencia de deuda §6 restante y Sprint 15 (Feed) o integración frontend.
+- Sprint 16: Integración Frontend, o Sprint de Fixes sobre deuda §6 vigente.
 
 ---
 
 ## 5. BACKLOG
-- Sprint 15: Feed inmersivo — entidad de posts + endpoint paginado.
 - Sprint 16: Integración Frontend — `.env.local`, `authService.ts`, TanStack Query en Explorar/Radar.
+- Sprint 17: Feed inmersivo (Frontend) — conectar `PostsController` al pilar Feed (scroll infinito con cursor).
 
 ---
 
@@ -66,4 +67,6 @@ Marketplace de oficios tipo Red Social Laboral. La experiencia de usuario debe s
 ### Vigente
 - [ ] **Límites de longitud** en `Title` / `Description` / `ImageUrl`: aún no definidos; cuando se fijen, aplicar en Dominio + Fluent API (`HasMaxLength`).
 - [ ] **Diseño Radar — postulaciones:** definir si los profesionales postulan vía `JobContract` existente o se necesita entidad `Application`/`JobApplication`.
-- [ ] **dotnet-ef CLI** instalado en máquina: tools `9.0.9` < runtime `9.0.14`. Actualizar global tool: `dotnet tool update --global dotnet-ef`.
+
+### Resuelto en Sprint 15
+- [x] **dotnet-ef CLI** desactualizado — `dotnet tool update --global dotnet-ef` ejecutado (`9.0.9` → `10.0.10`, compatible con proyecto `net9.0`/runtime `9.0.14`).
