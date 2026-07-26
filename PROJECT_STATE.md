@@ -37,13 +37,14 @@ Marketplace de oficios tipo Red Social Laboral. La experiencia de usuario debe s
 - ✅ **Sprint 14 — Radar (Backend / JobRequest):** Domain enriquecido + migración + Application Ports/UseCase + `JobRequestsController` (`POST /api/job-requests`, `GET /api/job-requests/open`).
 - ✅ **Refactor Hexagonal:** Ports In/Out, UseCases, security adapters, UoW, composition root, Domain hygiene.
 - ✅ **Sprint 15 — Feed inmersivo (Backend):** Domain (`Post` rico, cursor-based), Ports In/Out, `PostService`, `PostRepository` (paginación por cursor `CreatedAt`+`Id`), `PostsController` (`POST /api/posts` `[Authorize]`, `GET /api/posts/feed` `[AllowAnonymous]`), migración `AddPostEntity` aplicada.
+- ✅ **Sprint de Fixes — Límites de longitud `JobRequest`:** `TitleMaxLength=100`, `DescriptionMaxLength=2000`, `ImageUrlsMaxLength=2048` (por URL) + `MaxImagesUrls=10` (cantidad) en Domain; Fluent API (`HasMaxLength` en `Title`/`Description`, `PrimitiveCollection(...).ElementType().HasMaxLength(...)` en `ImageUrls`); migración `AddJobRequestLengthLimits` aplicada.
 
 ## 4. FOCO ACTUAL: Sprint Fix / siguiente feature
 
-**Completado:** Hexagonal + Radar JobRequest (14.4–14.5) + Feed Post (Sprint 15).
+**Completado:** Hexagonal + Radar JobRequest (14.4–14.5) + Feed Post (Sprint 15) + Fix límites de longitud `JobRequest`.
 
 ### Próximo:
-- Sprint 16: Integración Frontend, o Sprint de Fixes sobre deuda §6 vigente.
+- Sprint 16: Integración Frontend.
 
 ---
 
@@ -65,8 +66,11 @@ Marketplace de oficios tipo Red Social Laboral. La experiencia de usuario debe s
 - [x] **`BaseEntity.FechaCreacion` → `CreatedAt`** — Domain en inglés; columna DB sigue `FechaCreacion`.
 
 ### Vigente
-- [ ] **Límites de longitud** en `Title` / `Description` / `ImageUrl`: aún no definidos; cuando se fijen, aplicar en Dominio + Fluent API (`HasMaxLength`).
-- [ ] **Diseño Radar — postulaciones:** definir si los profesionales postulan vía `JobContract` existente o se necesita entidad `Application`/`JobApplication`.
+- [ ] **Diseño Radar — postulaciones:** definir si los profesionales postulan vía `JobContract` existente o se necesita entidad `Application`/`JobApplication`. No bloquea Sprint 16 (frontend solo consume `GET /api/job-requests/open`).
 
 ### Resuelto en Sprint 15
 - [x] **dotnet-ef CLI** desactualizado — `dotnet tool update --global dotnet-ef` ejecutado (`9.0.9` → `10.0.10`, compatible con proyecto `net9.0`/runtime `9.0.14`).
+
+### Resuelto en Sprint de Fixes (post-Sprint 15)
+- [x] **Límites de longitud** en `JobRequest.Title` / `Description` / `ImageUrl` — Domain + Fluent API + migración aplicada.
+- [x] **Nota técnica:** en `PrimitiveCollection` (JSON), `HasMaxLength()` directo sobre la colección limita el string completo de la columna (todas las URLs concatenadas en JSON), no cada elemento — hay que encadenar `.ElementType().HasMaxLength(...)`. Aun así, ese `ElementType().HasMaxLength()` no genera DDL (no hay columna real por URL); la enforcement de longitud por URL vive únicamente en el guard del Dominio (`AddImageUrl`), que es el lugar correcto en Clean Architecture.

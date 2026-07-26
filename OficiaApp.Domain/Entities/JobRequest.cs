@@ -5,6 +5,10 @@ namespace OficiaApp.Domain.Entities;
 
 public class JobRequest : BaseEntity
 {
+    public const int TitleMaxLength = 100;
+    public const int DescriptionMaxLength = 2000;
+    public const int ImageUrlsMaxLength = 2048;
+    public const int MaxImagesUrls = 10;
     public Guid ClientProfileId { get; private set; }
     public ClientProfile ClientProfile { get; private set; } = null!;
     public Guid CategoryId { get; private set; }
@@ -29,6 +33,10 @@ public class JobRequest : BaseEntity
         {
             throw new ArgumentException("Title cannot be null, empty, or whitespace.", nameof(title));
         }
+        if (title.Length > TitleMaxLength)
+        {
+            throw new ArgumentException($"Title cannot exceed {TitleMaxLength} characters.", nameof(title));
+        }
         Title = title;
     }
 
@@ -37,6 +45,10 @@ public class JobRequest : BaseEntity
         if (string.IsNullOrWhiteSpace(description))
         {
             throw new ArgumentException("Description cannot be null, empty, or whitespace.", nameof(description));
+        }
+        if (description.Length > DescriptionMaxLength)
+        {
+            throw new ArgumentException($"Description cannot exceed {DescriptionMaxLength} characters.", nameof(description));
         }
         Description = description;
     }
@@ -50,6 +62,14 @@ public class JobRequest : BaseEntity
         if (_imagesUrls.Contains(imageUrl))
         {
             return;
+        }
+        if (_imagesUrls.Count >= MaxImagesUrls)
+        {
+            throw new ArgumentException($"Cannot add more than {MaxImagesUrls} image URLs.", nameof(imageUrl));
+        }
+        if (imageUrl.Length > ImageUrlsMaxLength)
+        {
+            throw new ArgumentException($"Image URL cannot exceed {ImageUrlsMaxLength} characters.", nameof(imageUrl));
         }
         _imagesUrls.Add(imageUrl);
     }

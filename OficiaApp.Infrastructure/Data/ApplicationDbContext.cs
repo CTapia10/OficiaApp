@@ -56,8 +56,20 @@ public class ApplicationDbContext : DbContext
         {
             // PrimitiveCollection (not Property) — required for List<string> migrations scaffolding in EF Core 9
             e.PrimitiveCollection<List<string>>("_imagesUrls")
-                .HasColumnName("ImageUrls");
+                .HasColumnName("ImageUrls")
+                .ElementType()
+                .HasMaxLength(JobRequest.ImageUrlsMaxLength);
         });
+
+        modelBuilder.Entity<JobRequest>()
+            .Property(j => j.Title)
+            .HasMaxLength(JobRequest.TitleMaxLength);
+
+        modelBuilder.Entity<JobRequest>()
+            .Property(j => j.Description)
+            .HasMaxLength(JobRequest.DescriptionMaxLength);
+
+        
 
         modelBuilder.Entity<Post>()
             .HasOne(p => p.ProfessionalProfile)
@@ -72,5 +84,7 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<Post>()
             .Property(p => p.MediaUrl)
             .HasMaxLength(Post.MediaUrlMaxLength);
+
+
     }
 }
