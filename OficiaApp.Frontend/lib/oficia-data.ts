@@ -1,16 +1,3 @@
-export type FeedPost = {
-  id: string
-  proName: string
-  proAvatar: string
-  rubro: string
-  cover: string
-  description: string
-  hashtags: string[]
-  likes: number
-  comments: number
-  shares: number
-}
-
 export type Pro = {
   id: string
   name: string
@@ -33,61 +20,6 @@ export type JobRequest = {
   postedAt: string
   applicants: number
 }
-
-export const feedPosts: FeedPost[] = [
-  {
-    id: 'f1',
-    proName: 'Martín Rivas',
-    proAvatar: '/pro-1.png',
-    rubro: 'Electricista Matriculado',
-    cover: '/work-electrical.png',
-    description:
-      'Renovamos el tablero completo de un dúplex. Seguridad ante todo ⚡',
-    hashtags: ['#electricidad', '#tablero', '#seguridad'],
-    likes: 1243,
-    comments: 86,
-    shares: 42,
-  },
-  {
-    id: 'f2',
-    proName: 'Lucía Fernández',
-    proAvatar: '/pro-2.png',
-    rubro: 'Plomería & Gas',
-    cover: '/work-plumbing.png',
-    description:
-      'Instalación de grifería premium en baño principal. Cero pérdidas 💧',
-    hashtags: ['#plomeria', '#griferia', '#baño'],
-    likes: 982,
-    comments: 54,
-    shares: 30,
-  },
-  {
-    id: 'f3',
-    proName: 'Diego Sosa',
-    proAvatar: '/pro-3.png',
-    rubro: 'Carpintería a medida',
-    cover: '/work-carpentry.png',
-    description:
-      'Mueble bajo mesada hecho 100% a medida en roble macizo 🪵',
-    hashtags: ['#carpinteria', '#amedida', '#cocina'],
-    likes: 2105,
-    comments: 132,
-    shares: 78,
-  },
-  {
-    id: 'f4',
-    proName: 'Pablo Núñez',
-    proAvatar: '/pro-4.png',
-    rubro: 'Pintura & Revestimientos',
-    cover: '/work-painting.png',
-    description:
-      'Pared de acento en living. Terminación impecable en un día 🎨',
-    hashtags: ['#pintura', '#deco', '#living'],
-    likes: 764,
-    comments: 41,
-    shares: 19,
-  },
-]
 
 export const categories = [
   'Todos',

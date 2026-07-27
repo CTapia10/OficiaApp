@@ -1,35 +1,41 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import {
   Heart,
   MessageCircle,
   Share2,
   Bookmark,
-  BadgeCheck,
   UserRound,
+  Loader2,
 } from 'lucide-react'
-import { feedPosts, type FeedPost } from '@/lib/oficia-data'
+import { useFeed } from '@/hooks/use-feed'
+import type { PostResponse } from '@/lib/posts/types'
 import { useUserMode } from './user-mode'
 import { cn } from '@/lib/utils'
 
-function formatCount(n: number) {
-  if (n >= 1000) return (n / 1000).toFixed(1).replace('.0', '') + 'k'
-  return String(n)
+const RELATIVE_TIME = new Intl.RelativeTimeFormat('es', { numeric: 'auto' })
+
+function formatRelativeTime(iso: string) {
+  const diffMs = new Date(iso).getTime() - Date.now()
+  const diffMinutes = Math.round(diffMs / 60_000)
+  if (Math.abs(diffMinutes) < 60) return RELATIVE_TIME.format(diffMinutes, 'minute')
+  const diffHours = Math.round(diffMinutes / 60)
+  if (Math.abs(diffHours) < 24) return RELATIVE_TIME.format(diffHours, 'hour')
+  const diffDays = Math.round(diffHours / 24)
+  return RELATIVE_TIME.format(diffDays, 'day')
 }
 
 function SocialButton({
   icon: Icon,
   label,
-  count,
   active,
   activeClass,
   onClick,
 }: {
   icon: typeof Heart
   label: string
-  count?: string
   active?: boolean
   activeClass?: string
   onClick?: () => void
@@ -48,20 +54,13 @@ function SocialButton({
           active && activeClass,
         )}
       >
-        <Icon
-          className={cn('size-6 text-white', active && 'fill-current')}
-        />
+        <Icon className={cn('size-6 text-white', active && 'fill-current')} />
       </span>
-      {count ? (
-        <span className="text-xs font-semibold text-white drop-shadow">
-          {count}
-        </span>
-      ) : null}
     </button>
   )
 }
 
-function FeedCard({ post }: { post: FeedPost }) {
+function FeedCard({ post }: { post: PostResponse }) {
   const { mode } = useUserMode()
   const [liked, setLiked] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -70,8 +69,8 @@ function FeedCard({ post }: { post: FeedPost }) {
   return (
     <article className="snap-start-always relative h-[100dvh] w-full shrink-0 md:h-full">
       <Image
-        src={post.cover || '/placeholder.svg'}
-        alt={`Trabajo de ${post.rubro} realizado por ${post.proName}`}
+        src={post.mediaUrl || '/placeholder.svg'}
+        alt={post.caption ?? 'Trabajo publicado por un profesional'}
         fill
         priority
         sizes="(min-width: 768px) 480px, 100vw"
@@ -85,21 +84,12 @@ function FeedCard({ post }: { post: FeedPost }) {
         <SocialButton
           icon={Heart}
           label="Me gusta"
-          count={formatCount(post.likes + (liked ? 1 : 0))}
           active={liked}
           activeClass="text-accent"
           onClick={() => setLiked((v) => !v)}
         />
-        <SocialButton
-          icon={MessageCircle}
-          label="Comentar"
-          count={formatCount(post.comments)}
-        />
-        <SocialButton
-          icon={Share2}
-          label="Compartir"
-          count={formatCount(post.shares)}
-        />
+        <SocialButton icon={MessageCircle} label="Comentar" />
+        <SocialButton icon={Share2} label="Compartir" />
         <SocialButton
           icon={Bookmark}
           label="Guardar"
@@ -112,30 +102,18 @@ function FeedCard({ post }: { post: FeedPost }) {
       {/* Bottom info + CTA */}
       <div className="absolute inset-x-0 bottom-20 z-10 px-4 pr-20 md:bottom-24">
         <div className="flex items-center gap-3">
-          <Image
-            src={post.proAvatar || '/placeholder.svg'}
-            alt={post.proName}
-            width={44}
-            height={44}
-            className="size-11 rounded-full object-cover ring-2 ring-white/70"
-          />
+          <span className="flex size-11 items-center justify-center rounded-full bg-black/35 ring-2 ring-white/70">
+            <UserRound className="size-6 text-white" />
+          </span>
           <div className="min-w-0">
-            <div className="flex items-center gap-1">
-              <p className="truncate font-semibold text-white">
-                {post.proName}
-              </p>
-              <BadgeCheck className="size-4 shrink-0 text-primary" />
-            </div>
-            <p className="truncate text-sm text-white/70">{post.rubro}</p>
+            <p className="truncate font-semibold text-white">Profesional</p>
+            <p className="truncate text-sm text-white/70">{formatRelativeTime(post.createdAt)}</p>
           </div>
         </div>
 
-        <p className="mt-3 text-pretty text-sm text-white/90">
-          {post.description}
-        </p>
-        <p className="mt-1 text-sm font-medium text-primary">
-          {post.hashtags.join(' ')}
-        </p>
+        {post.caption ? (
+          <p className="mt-3 text-pretty text-sm text-white/90">{post.caption}</p>
+        ) : null}
 
         {isPro ? (
           <button
@@ -143,7 +121,7 @@ function FeedCard({ post }: { post: FeedPost }) {
             className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl border border-white/25 bg-white/10 py-3.5 text-sm font-bold text-white backdrop-blur-md transition-transform active:scale-[0.98] md:max-w-xs"
           >
             <UserRound className="size-4" />
-            Ver perfil de {post.proName.split(' ')[0]}
+            Ver perfil
           </button>
         ) : (
           <button
@@ -159,11 +137,75 @@ function FeedCard({ post }: { post: FeedPost }) {
 }
 
 export function FeedView() {
+  const feedQuery = useFeed()
+  const sentinelRef = useRef<HTMLDivElement>(null)
+
+  const posts = useMemo(
+    () => feedQuery.data?.pages.flatMap((page) => page.items) ?? [],
+    [feedQuery.data],
+  )
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && feedQuery.hasNextPage && !feedQuery.isFetchingNextPage) {
+          feedQuery.fetchNextPage()
+        }
+      },
+      { rootMargin: '200px' },
+    )
+
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [feedQuery.hasNextPage, feedQuery.isFetchingNextPage, feedQuery.fetchNextPage])
+
+  if (feedQuery.isLoading) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <Loader2 className="size-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  if (feedQuery.isError) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
+        <p className="text-sm text-destructive">
+          No pudimos cargar el feed. Probá de nuevo en un momento.
+        </p>
+        <button
+          type="button"
+          onClick={() => feedQuery.refetch()}
+          className="rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground hover:border-primary/40"
+        >
+          Reintentar
+        </button>
+      </div>
+    )
+  }
+
+  if (posts.length === 0) {
+    return (
+      <div className="flex h-full items-center justify-center px-6 text-center text-sm text-muted-foreground">
+        Todavía no hay publicaciones para mostrar.
+      </div>
+    )
+  }
+
   return (
     <div className="no-scrollbar snap-y-mandatory h-full overflow-y-auto">
-      {feedPosts.map((post) => (
+      {posts.map((post) => (
         <FeedCard key={post.id} post={post} />
       ))}
+      <div ref={sentinelRef} aria-hidden className="h-px w-full" />
+      {feedQuery.isFetchingNextPage ? (
+        <div className="flex justify-center py-6">
+          <Loader2 className="size-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : null}
     </div>
   )
 }

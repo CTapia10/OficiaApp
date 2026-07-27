@@ -4,8 +4,8 @@
 
 ## 1. Now
 
-- **Last closed:** Fixes sprint — auth DTO hygiene + login rate limit + Explore verified heuristic removed + `docs/PRODUCT_MAP.md`.
-- **Next:** Sprint 17 — Immersive Feed (Frontend): wire `PostsController` to the Feed pillar (infinite scroll + cursor).
+- **Last closed:** Sprint 17 — Feed (Frontend) wired to `GET /api/posts/feed` with cursor infinite scroll.
+- **Next:** Sprint 18 — Requests (Frontend): `POST /api/job-requests` + client's own list.
 
 ## 2. Stack map
 
@@ -19,7 +19,7 @@
 - **UI:** Tailwind, shadcn/ui, Lucide, Mobile-First.
 - **State:** Zustand (`lib/auth/auth-store.ts` — profile only, never JWT) + TanStack Query (`app/providers.tsx`).
 - **API:** `lib/api/api-client.ts` (`apiFetch`, `credentials: 'include'`, `ApiError`) + domain services + `hooks/use-*.ts`.
-- **Mock vs real:** Feed + Requests still mock (`lib/oficia-data.ts`). Explore + Radar + Profile (username/email) consume the Api. Session bootstrap: `GET /api/users/me` via `useAuth()`.
+- **Mock vs real:** Feed now real (`lib/posts/posts-service.ts` + `hooks/use-feed.ts`, `useInfiniteQuery` cursor pagination). Requests still mock (`lib/oficia-data.ts`). Explore + Radar + Profile (username/email) consume the Api. Session bootstrap: `GET /api/users/me` via `useAuth()`.
 
 ## 3. Living constraints
 
@@ -37,7 +37,6 @@
 
 ## 4. Backlog
 
-- Sprint 17: Feed (Frontend) — `GET /api/posts/feed` + cursor infinite scroll.
 - Sprint 18: Requests (Frontend) — `POST /api/job-requests` + client's own list; `RequestsView` still mock (align with PRODUCT_MAP).
 - **Radar apply (pro):** request detail + `JobApplication` entity/endpoints; client accept → `JobContract` + `JobRequest.Accept()` (see PRODUCT_MAP).
 - **Radar geo:** location fields on `JobRequest` + map/list by distance.
@@ -49,4 +48,5 @@
 
 > Agent adds open items here without blocking the current sprint. Before the next feature sprint: validate each item still applies, run a Fixes sprint (or end-of-sprint fixes block). Move resolved items to `docs/PROJECT_HISTORY.md` — do not keep `[x]` here.
 
-_(none)_
+- `PostResponseDto` has no author snapshot (`professionalProfileId` only, no name/avatar/rubro) nor social counters (likes/comments/shares). `FeedCard` was simplified to real fields; Pillar 1 (immersive feed) needs either an enriched feed DTO or a public "get professional profile by id" endpoint before social proof UI can come back.
+- `PostsController.GetFeed` / `PostService.GetFeedAsync` `take` param has no upper bound — a client can request an arbitrarily large page (DoS/perf risk). Needs server-side clamp (e.g. `Math.Min(take, 50)`).
