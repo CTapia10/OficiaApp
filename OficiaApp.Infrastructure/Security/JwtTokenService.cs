@@ -5,7 +5,6 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using OficiaApp.Application.Ports.Out;
 using OficiaApp.Application.Settings;
-using OficiaApp.Domain.Entities;
 
 namespace OficiaApp.Infrastructure.Security;
 
@@ -18,7 +17,7 @@ public class JwtTokenService : ITokenService
         _jwtSettings = jwtSettings.Value;
     }
 
-    public string GenerateToken(User user)
+    public string GenerateToken(Guid userId, string username, string email)
     {
         if (string.IsNullOrWhiteSpace(_jwtSettings.SecretKey))
         {
@@ -40,9 +39,9 @@ public class JwtTokenService : ITokenService
 
         var claims = new[]
         {
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Email, user.Email),
-            new Claim(ClaimTypes.Name, user.Username)
+            new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+            new Claim(ClaimTypes.Email, email),
+            new Claim(ClaimTypes.Name, username)
         };
 
         var token = new JwtSecurityToken(

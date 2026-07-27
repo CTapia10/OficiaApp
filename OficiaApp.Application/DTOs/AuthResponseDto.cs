@@ -1,3 +1,3 @@
 namespace OficiaApp.Application.DTOs;
 
-public record AuthResponseDto(string Token, string Username, string Email);
+public record AuthResponseDto(Guid UserId, string Username, string Email);

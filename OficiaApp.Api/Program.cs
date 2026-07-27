@@ -1,5 +1,7 @@
 using System.Text;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using OficiaApp.Api.Security;
 using OficiaApp.Application;
@@ -19,15 +21,29 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        // AllowCredentials es obligatorio para que el navegador adjunte la cookie
-        // httpOnly en requests cross-origin (frontend :3000 -> api :7086).
-        // Por spec, AllowCredentials() no puede combinarse con AllowAnyOrigin(),
-        // por eso el origen viene siempre de una whitelist explícita (appsettings).
+        // AllowCredentials is required so the browser sends the httpOnly cookie
+        // on cross-origin requests (frontend :3000 -> api).
+        // AllowCredentials() cannot be combined with AllowAnyOrigin(); origins
+        // always come from an explicit whitelist (appsettings).
         policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
     });
+});
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("login", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
 });
 
 builder.Services.AddAuthentication(options =>
@@ -50,11 +66,9 @@ builder.Services.AddAuthentication(options =>
                 ?? throw new InvalidOperationException("SecretKey is missing")))
     };
 
-    // El middleware JwtBearer solo sabe leer el token del header "Authorization".
-    // Como el frontend guarda el JWT en una cookie httpOnly (no accesible desde JS,
-    // mitiga robo por XSS), acá le enseñamos a leerlo también de esa cookie.
-    // Si además llega un header Authorization explícito (Swagger, Postman, tests),
-    // ese header tiene prioridad.
+    // JwtBearer reads Authorization by default. Teach it to also read the
+    // httpOnly cookie when no Authorization header is present (Swagger/Postman
+    // header still wins when present).
     options.Events = new JwtBearerEvents
     {
         OnMessageReceived = context =>
@@ -81,6 +95,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors("AllowFrontend");
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

@@ -8,18 +8,15 @@ namespace OficiaApp.Application.UseCases;
 public class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;
-    private readonly ITokenService _tokenService;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IUnitOfWork _unitOfWork;
 
     public UserService(
         IUserRepository userRepository,
-        ITokenService tokenService,
         IPasswordHasher passwordHasher,
         IUnitOfWork unitOfWork)
     {
         _userRepository = userRepository;
-        _tokenService = tokenService;
         _passwordHasher = passwordHasher;
         _unitOfWork = unitOfWork;
     }
@@ -46,7 +43,6 @@ public class UserService : IUserService
             throw new InvalidOperationException("Invalid credentials.");
         }
 
-        var token = _tokenService.GenerateToken(user);
-        return new AuthResponseDto(token, user.Username, user.Email);
+        return new AuthResponseDto(user.Id, user.Username, user.Email);
     }
 }

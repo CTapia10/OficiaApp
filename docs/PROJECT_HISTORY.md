@@ -14,6 +14,7 @@
 - ✅ **Sprint 15 — Immersive Feed (Backend):** Domain (`Post` rich, cursor-based), Ports In/Out, `PostService`, `PostRepository` (cursor pagination `CreatedAt`+`Id`), `PostsController` (`POST /api/posts` `[Authorize]`, `GET /api/posts/feed` `[AllowAnonymous]`), migration `AddPostEntity` applied.
 - ✅ **Fixes sprint — JobRequest length limits:** `TitleMaxLength=100`, `DescriptionMaxLength=2000`, `ImageUrlsMaxLength=2048` (per URL) + `MaxImagesUrls=10` in Domain; Fluent API (`HasMaxLength` on `Title`/`Description`, `PrimitiveCollection(...).ElementType().HasMaxLength(...)` on `ImageUrls`); migration `AddJobRequestLengthLimits` applied.
 - ✅ **Sprint 16 — Frontend integration:** JWT via httpOnly cookie (`AuthCookies`, `Program.cs`, `UsersController.Login/Logout/Me`) + `[Required]`/`[EmailAddress]`/`[MinLength]` on `LoginUserDto`/`RegisterUserDto`; `api-client.ts` + `ApiError`; `authService` + `auth-store` (Zustand) + `useAuth`; `QueryClientProvider` (`app/providers.tsx`); Explore wired to `GET /api/categories` + `GET /api/professional-profile/search`; Radar wired to `GET /api/job-requests/open` (requires session); login/register/logout UI in `ProfileView`. E2E verified with `curl` (cookie set/read/cleared, 401 without session, CORS preflight with credentials).
+- ✅ **Fixes sprint (post-Sprint 16):** `docs/PRODUCT_MAP.md`; login identity DTO without Token (Api issues JWT); rate limit on login; Explore verified heuristic removed; Open debt cleared.
 
 ## Resolved debt
 
@@ -30,3 +31,10 @@
 ### Fixes sprint (post-Sprint 15)
 - [x] **Length limits** on `JobRequest.Title` / `Description` / `ImageUrl` — Domain + Fluent API + migration applied.
 - [x] **Note:** on `PrimitiveCollection` (JSON), `HasMaxLength()` directly on the collection limits the full column string (all URLs concatenated in JSON), not each element — chain `.ElementType().HasMaxLength(...)`. Even then, that does not emit per-URL DDL; per-URL length enforcement lives in the Domain guard (`AddImageUrl`), which is correct under Clean Architecture.
+
+### Fixes sprint (post-Sprint 16 — close Open debt)
+- [x] **`AuthResponseDto.Token` removed** — Application login returns identity only (`UserId`, `Username`, `Email`); Api issues JWT via `ITokenService` and sets httpOnly cookie; body never includes the token.
+- [x] **Login rate limiting** — `AddRateLimiter` policy `"login"` (fixed window per IP) + `[EnableRateLimiting("login")]` on `POST /api/users/login`.
+- [x] **Explore “verified” heuristic removed** — no `BadgeCheck` from `yearsOfExperience >= 5`; real `IsVerified` deferred to backlog.
+- [x] **Product map** — `docs/PRODUCT_MAP.md` (roles, pillars, Radar ↔ Mis solicitudes, `JobApplication` → `JobContract` on accept).
+- [x] **MVP decisions (not debt):** refresh-token rotation deferred (120 min re-login OK); ProfileView mock stats/history/avatar until profiles wired; Radar apply/geo tracked in backlog.

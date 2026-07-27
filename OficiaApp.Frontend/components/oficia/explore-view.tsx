@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import Image from 'next/image'
-import { Search, Briefcase, MapPin, BadgeCheck, SlidersHorizontal } from 'lucide-react'
+import { Search, Briefcase, MapPin, SlidersHorizontal } from 'lucide-react'
 import { useCategories } from '@/hooks/use-categories'
 import { useProfessionalsSearch } from '@/hooks/use-professionals-search'
 import { cn } from '@/lib/utils'
@@ -120,9 +120,6 @@ export function ExploreView() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1">
                   <p className="truncate font-semibold">{pro.username}</p>
-                  {pro.yearsOfExperience >= 5 && (
-                    <BadgeCheck className="size-4 shrink-0 text-primary" />
-                  )}
                 </div>
                 <p className="truncate text-sm text-muted-foreground">{pro.bio}</p>
                 <div className="mt-1 flex items-center gap-3">

@@ -1,10 +1,12 @@
 ﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
 using OficiaApp.Api.Security;
 using OficiaApp.Application.DTOs;
 using OficiaApp.Application.Ports.In;
+using OficiaApp.Application.Ports.Out;
 using OficiaApp.Application.Settings;
 
 namespace OficiaApp.Api.Controllers;
@@ -14,11 +16,16 @@ namespace OficiaApp.Api.Controllers;
 public class UsersController : ControllerBase
 {
     private readonly IUserService _userService;
+    private readonly ITokenService _tokenService;
     private readonly JwtSettings _jwtSettings;
 
-    public UsersController(IUserService userService, IOptions<JwtSettings> jwtSettings)
+    public UsersController(
+        IUserService userService,
+        ITokenService tokenService,
+        IOptions<JwtSettings> jwtSettings)
     {
         _userService = userService;
+        _tokenService = tokenService;
         _jwtSettings = jwtSettings.Value;
     }
 
@@ -41,18 +48,22 @@ public class UsersController : ControllerBase
     }
 
     [HttpPost("login")]
+    [EnableRateLimiting("login")]
     public async Task<IActionResult> Login([FromBody] LoginUserDto loginUserDto)
     {
         try
         {
             var authResponse = await _userService.LoginAsync(loginUserDto);
 
-            var expiresAt = DateTimeOffset.UtcNow.AddMinutes(_jwtSettings.ExpirationInMinutes);
-            Response.Cookies.Append(AuthCookies.AccessToken, authResponse.Token, AuthCookies.BuildOptions(expiresAt));
+            var token = _tokenService.GenerateToken(
+                authResponse.UserId,
+                authResponse.Username,
+                authResponse.Email);
 
-            // El JWT solo viaja por la cookie httpOnly: nunca lo devolvemos en el
-            // body para que no quede expuesto a código JS (ni por error, ni por un
-            // futuro bug de XSS que lea la respuesta antes de descartarla).
+            var expiresAt = DateTimeOffset.UtcNow.AddMinutes(_jwtSettings.ExpirationInMinutes);
+            Response.Cookies.Append(AuthCookies.AccessToken, token, AuthCookies.BuildOptions(expiresAt));
+
+            // JWT only travels via the httpOnly cookie — never in the response body.
             return Ok(new { username = authResponse.Username, email = authResponse.Email });
         }
         catch (InvalidOperationException ex)
@@ -76,9 +87,7 @@ public class UsersController : ControllerBase
     [HttpGet("me")]
     public IActionResult Me()
     {
-        // El JWT ya fue validado por el middleware de autenticación antes de llegar
-        // acá; sus claims alcanzan para identificar al usuario sin volver a golpear
-        // la base de datos.
+        // JWT already validated by auth middleware; claims identify the user without a DB round-trip.
         var id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var username = User.FindFirst(ClaimTypes.Name)?.Value;
         var email = User.FindFirst(ClaimTypes.Email)?.Value;
