@@ -1,59 +1,37 @@
 'use client'
 
-import { MapPin, Zap, Send, Clock, Users } from 'lucide-react'
-import { jobRequests, type JobRequest } from '@/lib/oficia-data'
-import { cn } from '@/lib/utils'
+import { MapPin, Send, Clock, LogIn } from 'lucide-react'
+import { useAuth } from '@/hooks/use-auth'
+import { useOpenJobRequests } from '@/hooks/use-open-job-requests'
+import type { JobRequestResponse } from '@/lib/job-requests/types'
 
-const urgencyStyles: Record<JobRequest['urgency'], string> = {
-  Urgente: 'bg-destructive/15 text-destructive ring-destructive/30',
-  'Esta semana': 'bg-amber-400/15 text-amber-400 ring-amber-400/30',
-  Flexible: 'bg-emerald-400/15 text-emerald-400 ring-emerald-400/30',
-}
+function JobCard({ job }: { job: JobRequestResponse }) {
+  const postedAt = new Date(job.createdAt).toLocaleDateString('es-AR', {
+    day: '2-digit',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
 
-function JobCard({ job }: { job: JobRequest }) {
   return (
     <article className="rounded-2xl border border-border bg-card p-4">
       <div className="flex items-start justify-between gap-3">
         <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-          {job.category}
-        </span>
-        <span
-          className={cn(
-            'flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ring-1',
-            urgencyStyles[job.urgency],
-          )}
-        >
-          {job.urgency === 'Urgente' && <Zap className="size-3.5" />}
-          {job.urgency}
+          {job.status}
         </span>
       </div>
 
-      <h3 className="mt-3 text-pretty text-base font-semibold leading-snug">
-        {job.title}
-      </h3>
+      <h3 className="mt-3 text-pretty text-base font-semibold leading-snug">{job.title}</h3>
+      <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{job.description}</p>
 
       <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
         <span className="flex items-center gap-1.5">
-          <MapPin className="size-4" />
-          {job.zone} · {job.distance}
-        </span>
-        <span className="flex items-center gap-1.5">
           <Clock className="size-4" />
-          {job.postedAt}
-        </span>
-        <span className="flex items-center gap-1.5">
-          <Users className="size-4" />
-          {job.applicants} postulados
+          {postedAt}
         </span>
       </div>
 
-      <div className="mt-4 flex items-center justify-between gap-3">
-        <div>
-          <p className="text-xs text-muted-foreground">Presupuesto est.</p>
-          <p className="font-display font-semibold oficia-gradient-text">
-            {job.budget}
-          </p>
-        </div>
+      <div className="mt-4 flex items-center justify-end gap-3">
         <button
           type="button"
           className="oficia-gradient flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-primary-foreground shadow-lg shadow-primary/25 transition-transform active:scale-95"
@@ -66,7 +44,23 @@ function JobCard({ job }: { job: JobRequest }) {
   )
 }
 
+function RadarAuthGate() {
+  return (
+    <div className="flex flex-col items-center gap-3 rounded-3xl border border-dashed border-border p-8 text-center">
+      <LogIn className="size-8 text-muted-foreground" />
+      <p className="text-sm text-muted-foreground">
+        Iniciá sesión desde tu perfil para ver las solicitudes de trabajo cerca tuyo.
+      </p>
+    </div>
+  )
+}
+
 export function RadarView() {
+  const { user, isCheckingSession } = useAuth()
+  const jobRequestsQuery = useOpenJobRequests()
+
+  const jobs = jobRequestsQuery.data ?? []
+
   return (
     <div className="mx-auto h-full max-w-2xl overflow-y-auto px-4 pb-28 pt-6">
       <header className="mb-5">
@@ -82,32 +76,42 @@ export function RadarView() {
         </p>
       </header>
 
-      <div className="mb-4 flex gap-2">
-        <div className="flex-1 rounded-2xl border border-border bg-card p-3 text-center">
-          <p className="font-display text-xl font-bold text-foreground">
-            {jobRequests.length}
-          </p>
-          <p className="text-xs text-muted-foreground">Nuevas hoy</p>
+      {isCheckingSession ? (
+        <div className="animate-pulse rounded-3xl border border-border bg-card p-6 text-sm text-muted-foreground">
+          Cargando…
         </div>
-        <div className="flex-1 rounded-2xl border border-border bg-card p-3 text-center">
-          <p className="font-display text-xl font-bold oficia-gradient-text">
-            94%
-          </p>
-          <p className="text-xs text-muted-foreground">Tasa de match</p>
-        </div>
-        <div className="flex-1 rounded-2xl border border-border bg-card p-3 text-center">
-          <p className="font-display text-xl font-bold text-foreground">
-            4.9
-          </p>
-          <p className="text-xs text-muted-foreground">Tu rating</p>
-        </div>
-      </div>
+      ) : !user ? (
+        <RadarAuthGate />
+      ) : (
+        <>
+          <div className="mb-4 flex gap-2">
+            <div className="flex-1 rounded-2xl border border-border bg-card p-3 text-center">
+              <p className="font-display text-xl font-bold text-foreground">
+                {jobRequestsQuery.isLoading ? '…' : jobs.length}
+              </p>
+              <p className="text-xs text-muted-foreground">Abiertas</p>
+            </div>
+          </div>
 
-      <div className="flex flex-col gap-3">
-        {jobRequests.map((job) => (
-          <JobCard key={job.id} job={job} />
-        ))}
-      </div>
+          <div className="flex flex-col gap-3">
+            {jobRequestsQuery.isError && (
+              <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-center text-sm text-destructive">
+                No pudimos cargar las solicitudes. Probá de nuevo en un momento.
+              </div>
+            )}
+
+            {!jobRequestsQuery.isLoading && !jobRequestsQuery.isError && jobs.length === 0 && (
+              <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+                No hay solicitudes abiertas por el momento.
+              </div>
+            )}
+
+            {jobs.map((job) => (
+              <JobCard key={job.id} job={job} />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   )
 }

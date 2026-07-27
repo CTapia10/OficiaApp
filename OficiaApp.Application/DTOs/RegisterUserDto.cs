@@ -1,3 +1,8 @@
-﻿namespace OficiaApp.Application.DTOs;
+﻿using System.ComponentModel.DataAnnotations;
 
-public record RegisterUserDto(string Username, string Email, string Password);
+namespace OficiaApp.Application.DTOs;
+
+public record RegisterUserDto(
+    [Required, MinLength(3), MaxLength(50)] string Username,
+    [Required, EmailAddress, MaxLength(256)] string Email,
+    [Required, MinLength(8), MaxLength(100)] string Password);

@@ -1,3 +1,7 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace OficiaApp.Application.DTOs;
 
-public record LoginUserDto(string Email, string Password);
+public record LoginUserDto(
+    [Required, EmailAddress] string Email,
+    [Required] string Password);

@@ -10,14 +10,18 @@ import {
   Bell,
   Bookmark,
   Clock,
+  LogOut,
   Share2,
   Wrench,
   Sparkles,
   ClipboardList,
 } from 'lucide-react'
 import { clientProfile } from '@/lib/oficia-data'
+import { useAuth } from '@/hooks/use-auth'
+import type { AuthUser } from '@/lib/auth/types'
 import { useUserMode } from './user-mode'
 import { ModeSwitch } from './mode-switch'
+import { AuthGate } from './auth-forms'
 
 const proHistory = [
   {
@@ -62,6 +66,22 @@ function Stat({ value, label }: { value: string; label: string }) {
   )
 }
 
+function LogoutButton() {
+  const { logout, isLoggingOut } = useAuth()
+
+  return (
+    <button
+      type="button"
+      onClick={() => logout()}
+      disabled={isLoggingOut}
+      className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/20 disabled:opacity-60"
+    >
+      <LogOut className="size-4" />
+      {isLoggingOut ? 'Cerrando sesión…' : 'Cerrar sesión'}
+    </button>
+  )
+}
+
 function SettingsList() {
   return (
     <section className="mt-6">
@@ -90,7 +110,7 @@ function SettingsList() {
 }
 
 /* --- Perfil de cliente (por defecto para todos) --- */
-function ClientProfile() {
+function ClientProfile({ user }: { user: AuthUser }) {
   const { isPro, activatePro } = useUserMode()
 
   return (
@@ -101,7 +121,7 @@ function ClientProfile() {
           <div className="-mt-10 flex items-end justify-between">
             <Image
               src={clientProfile.avatar || '/placeholder.svg'}
-              alt={clientProfile.name}
+              alt={user.username}
               width={88}
               height={88}
               className="size-22 rounded-2xl object-cover ring-4 ring-card"
@@ -114,16 +134,14 @@ function ClientProfile() {
             </button>
           </div>
           <div className="mt-3 flex items-center gap-2">
-            <h1 className="font-display text-xl font-bold">
-              {clientProfile.name}
-            </h1>
+            <h1 className="font-display text-xl font-bold">{user.username}</h1>
             <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium text-muted-foreground">
               Cliente
             </span>
           </div>
           <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
             <MapPin className="size-4" />
-            {clientProfile.location}
+            {user.email}
           </p>
 
           <div className="mt-4 flex items-center rounded-2xl border border-border bg-background/40 py-3">
@@ -195,25 +213,26 @@ function ClientProfile() {
       </section>
 
       <SettingsList />
+      <LogoutButton />
     </>
   )
 }
 
 /* --- Perfil profesional --- */
-function ProProfile() {
+function ProProfile({ user }: { user: AuthUser }) {
   return (
     <>
       <section className="overflow-hidden rounded-3xl border border-border bg-card">
         <div className="oficia-gradient h-24 w-full" />
         <div className="px-4 pb-4">
           <div className="-mt-10 flex items-end justify-between">
-            <Image
-              src="/pro-1.png"
-              alt="Martín Rivas"
-              width={88}
-              height={88}
-              className="size-22 rounded-2xl object-cover ring-4 ring-card"
-            />
+          <Image
+            src="/pro-1.png"
+            alt={user.username}
+            width={88}
+            height={88}
+            className="size-22 rounded-2xl object-cover ring-4 ring-card"
+          />
             <button
               type="button"
               className="rounded-xl border border-border bg-secondary px-4 py-2 text-sm font-semibold transition-colors hover:bg-accent hover:text-accent-foreground"
@@ -222,16 +241,10 @@ function ProProfile() {
             </button>
           </div>
           <div className="mt-3 flex items-center gap-1.5">
-            <h1 className="font-display text-xl font-bold">Martín Rivas</h1>
+            <h1 className="font-display text-xl font-bold">{user.username}</h1>
             <BadgeCheck className="size-5 text-primary" />
           </div>
-          <p className="text-sm text-muted-foreground">
-            Electricista Matriculado · Cat. III
-          </p>
-          <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
-            <MapPin className="size-4" />
-            Palermo, CABA
-          </p>
+          <p className="text-sm text-muted-foreground">{user.email}</p>
 
           <div className="mt-4 flex items-center rounded-2xl border border-border bg-background/40 py-3">
             <Stat value="213" label="Trabajos" />
@@ -283,6 +296,7 @@ function ProProfile() {
       </section>
 
       <SettingsList />
+      <LogoutButton />
     </>
   )
 }
@@ -293,12 +307,23 @@ export function ProfileView({
   onNavigate?: (tab: 'inicio' | 'explorar' | 'radar' | 'solicitudes' | 'perfil') => void
 }) {
   const { mode } = useUserMode()
+  const { user, isCheckingSession } = useAuth()
   // onNavigate disponible para navegación futura desde el perfil
   void onNavigate
 
   return (
     <div className="mx-auto h-full max-w-2xl overflow-y-auto px-4 pb-28 pt-6">
-      {mode === 'pro' ? <ProProfile /> : <ClientProfile />}
+      {isCheckingSession ? (
+        <div className="animate-pulse rounded-3xl border border-border bg-card p-6 text-sm text-muted-foreground">
+          Cargando perfil…
+        </div>
+      ) : !user ? (
+        <AuthGate />
+      ) : mode === 'pro' ? (
+        <ProProfile user={user} />
+      ) : (
+        <ClientProfile user={user} />
+      )}
     </div>
   )
 }

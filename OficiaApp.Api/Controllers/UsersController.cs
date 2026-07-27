@@ -1,6 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using OficiaApp.Api.Security;
 using OficiaApp.Application.DTOs;
 using OficiaApp.Application.Ports.In;
+using OficiaApp.Application.Settings;
 
 namespace OficiaApp.Api.Controllers;
 
@@ -9,10 +14,12 @@ namespace OficiaApp.Api.Controllers;
 public class UsersController : ControllerBase
 {
     private readonly IUserService _userService;
+    private readonly JwtSettings _jwtSettings;
 
-    public UsersController(IUserService userService)
+    public UsersController(IUserService userService, IOptions<JwtSettings> jwtSettings)
     {
         _userService = userService;
+        _jwtSettings = jwtSettings.Value;
     }
 
     [HttpPost("register")]
@@ -39,7 +46,14 @@ public class UsersController : ControllerBase
         try
         {
             var authResponse = await _userService.LoginAsync(loginUserDto);
-            return Ok(authResponse);
+
+            var expiresAt = DateTimeOffset.UtcNow.AddMinutes(_jwtSettings.ExpirationInMinutes);
+            Response.Cookies.Append(AuthCookies.AccessToken, authResponse.Token, AuthCookies.BuildOptions(expiresAt));
+
+            // El JWT solo viaja por la cookie httpOnly: nunca lo devolvemos en el
+            // body para que no quede expuesto a código JS (ni por error, ni por un
+            // futuro bug de XSS que lea la respuesta antes de descartarla).
+            return Ok(new { username = authResponse.Username, email = authResponse.Email });
         }
         catch (InvalidOperationException ex)
         {
@@ -49,5 +63,31 @@ public class UsersController : ControllerBase
         {
             return StatusCode(500, new { message = "An error occurred while logging in." });
         }
+    }
+
+    [HttpPost("logout")]
+    public IActionResult Logout()
+    {
+        Response.Cookies.Delete(AuthCookies.AccessToken, AuthCookies.BuildDeleteOptions());
+        return Ok(new { message = "Logged out successfully." });
+    }
+
+    [Authorize]
+    [HttpGet("me")]
+    public IActionResult Me()
+    {
+        // El JWT ya fue validado por el middleware de autenticación antes de llegar
+        // acá; sus claims alcanzan para identificar al usuario sin volver a golpear
+        // la base de datos.
+        var id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var username = User.FindFirst(ClaimTypes.Name)?.Value;
+        var email = User.FindFirst(ClaimTypes.Email)?.Value;
+
+        if (id == null || username == null || email == null)
+        {
+            return Unauthorized();
+        }
+
+        return Ok(new { id, username, email });
     }
 }

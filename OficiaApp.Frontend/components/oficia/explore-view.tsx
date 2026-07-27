@@ -2,34 +2,30 @@
 
 import { useMemo, useState } from 'react'
 import Image from 'next/image'
-import { Search, Star, MapPin, BadgeCheck, SlidersHorizontal } from 'lucide-react'
-import { categories, featuredPros } from '@/lib/oficia-data'
+import { Search, Briefcase, MapPin, BadgeCheck, SlidersHorizontal } from 'lucide-react'
+import { useCategories } from '@/hooks/use-categories'
+import { useProfessionalsSearch } from '@/hooks/use-professionals-search'
 import { cn } from '@/lib/utils'
 
-function Stars({ rating }: { rating: number }) {
-  return (
-    <span className="flex items-center gap-1">
-      <Star className="size-3.5 fill-amber-400 text-amber-400" />
-      <span className="text-sm font-semibold text-foreground">
-        {rating.toFixed(1)}
-      </span>
-    </span>
-  )
-}
+const ALL_CATEGORY_ID = 'all'
 
 export function ExploreView() {
-  const [active, setActive] = useState('Todos')
+  const [activeCategoryId, setActiveCategoryId] = useState(ALL_CATEGORY_ID)
   const [query, setQuery] = useState('')
 
+  const categoriesQuery = useCategories()
+  const professionalsQuery = useProfessionalsSearch({
+    categoryId: activeCategoryId === ALL_CATEGORY_ID ? undefined : activeCategoryId,
+  })
+
   const pros = useMemo(() => {
-    return featuredPros.filter((p) => {
-      const matchesQuery =
-        !query ||
-        p.name.toLowerCase().includes(query.toLowerCase()) ||
-        p.rubro.toLowerCase().includes(query.toLowerCase())
-      return matchesQuery
-    })
-  }, [query])
+    const results = professionalsQuery.data ?? []
+    if (!query) return results
+    const q = query.toLowerCase()
+    return results.filter(
+      (p) => p.username.toLowerCase().includes(q) || p.bio.toLowerCase().includes(q),
+    )
+  }, [professionalsQuery.data, query])
 
   return (
     <div className="mx-auto h-full max-w-2xl overflow-y-auto px-4 pb-28 pt-6">
@@ -64,72 +60,89 @@ export function ExploreView() {
 
       {/* Category pills */}
       <div className="no-scrollbar -mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1">
-        {categories.map((cat) => (
+        <button
+          type="button"
+          onClick={() => setActiveCategoryId(ALL_CATEGORY_ID)}
+          className={cn(
+            'shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors',
+            activeCategoryId === ALL_CATEGORY_ID
+              ? 'oficia-gradient text-primary-foreground'
+              : 'border border-border bg-card text-muted-foreground hover:text-foreground',
+          )}
+        >
+          Todos
+        </button>
+        {categoriesQuery.data?.map((cat) => (
           <button
-            key={cat}
+            key={cat.id}
             type="button"
-            onClick={() => setActive(cat)}
+            onClick={() => setActiveCategoryId(cat.id)}
             className={cn(
               'shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors',
-              active === cat
+              activeCategoryId === cat.id
                 ? 'oficia-gradient text-primary-foreground'
                 : 'border border-border bg-card text-muted-foreground hover:text-foreground',
             )}
           >
-            {cat}
+            {cat.name}
           </button>
         ))}
       </div>
 
       {/* Featured pros */}
       <div className="mt-6 flex items-center justify-between">
-        <h2 className="font-display text-lg font-semibold">
-          Perfiles destacados
-        </h2>
+        <h2 className="font-display text-lg font-semibold">Perfiles destacados</h2>
         <span className="text-xs text-muted-foreground">
-          {pros.length} resultados
+          {professionalsQuery.isLoading ? '…' : `${pros.length} resultados`}
         </span>
       </div>
 
       <ul className="mt-3 flex flex-col gap-3">
+        {professionalsQuery.isError && (
+          <li className="rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-center text-sm text-destructive">
+            No pudimos cargar los profesionales. Probá de nuevo en un momento.
+          </li>
+        )}
+
         {pros.map((pro) => (
-          <li key={pro.id}>
+          <li key={pro.profileId}>
             <button
               type="button"
               className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card p-3 text-left transition-colors hover:border-primary/40"
             >
               <Image
-                src={pro.avatar || '/placeholder.svg'}
-                alt={pro.name}
+                src="/placeholder.svg"
+                alt={pro.username}
                 width={60}
                 height={60}
                 className="size-15 shrink-0 rounded-xl object-cover"
               />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1">
-                  <p className="truncate font-semibold">{pro.name}</p>
-                  {pro.verified && (
+                  <p className="truncate font-semibold">{pro.username}</p>
+                  {pro.yearsOfExperience >= 5 && (
                     <BadgeCheck className="size-4 shrink-0 text-primary" />
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground">{pro.rubro}</p>
+                <p className="truncate text-sm text-muted-foreground">{pro.bio}</p>
                 <div className="mt-1 flex items-center gap-3">
-                  <Stars rating={pro.rating} />
-                  <span className="text-xs text-muted-foreground">
-                    ({pro.reviews})
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Briefcase className="size-3.5" />
+                    {pro.yearsOfExperience} años exp.
                   </span>
                   <span className="flex items-center gap-1 text-xs text-muted-foreground">
                     <MapPin className="size-3.5" />
-                    {pro.location}
+                    ${pro.hourlyRate}/h
                   </span>
                 </div>
               </div>
             </button>
           </li>
         ))}
-        {pros.length === 0 && (
+
+        {!professionalsQuery.isLoading && !professionalsQuery.isError && pros.length === 0 && (
           <li className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-            No encontramos profesionales para “{query}”.
+            No encontramos profesionales para “{query || 'esta categoría'}”.
           </li>
         )}
       </ul>

@@ -12,11 +12,12 @@ Marketplace de oficios tipo Red Social Laboral. La experiencia de usuario debe s
 - **API (driving adapter):** Controllers RESTful, JWT Bearer validation en el host, `Program.cs` delgado (`AddApplication` + `AddInfrastructure`). CORS `AllowFrontend` → `localhost:3000`.
 - **Último hito backend:** Refactor Hexagonal completo + Sprint 14 cerrado (`JobRequest` Ports/UseCase/Repo/Controller).
 
-### Track Frontend (esqueleto UI listo):
+### Track Frontend (integración real iniciada):
 - **Stack:** Next.js (React) + TypeScript.
-- **UI/UX:** Tailwind CSS, shadcn/ui, Lucide React (Mobile-First). Vistas mock: Feed, Explorar, Radar, Solicitudes, Perfil (`lib/oficia-data.ts`).
-- **Gestión de Estado (planificado):** Zustand + TanStack Query.
-- **Integración API:** Pendiente (después de Auth backend completo).
+- **UI/UX:** Tailwind CSS, shadcn/ui, Lucide React (Mobile-First). Feed y Solicitudes siguen en mock (`lib/oficia-data.ts`); Explorar, Radar y Perfil ya consumen la Api real.
+- **Gestión de Estado:** Zustand (`lib/auth/auth-store.ts`, solo perfil de usuario — nunca el JWT) + TanStack Query (`app/providers.tsx`, `QueryClientProvider` por sesión de navegador vía `useState`).
+- **Integración API:** `lib/api/api-client.ts` (`apiFetch<T>`, `credentials: 'include'`, `ApiError` tipado). Servicios por dominio en `lib/<dominio>/*-service.ts` + hooks en `hooks/use-*.ts`.
+- **Sesión (Sprint 16):** JWT transportado en cookie `httpOnly` (`oficia_access_token`), nunca en `localStorage` ni en el body de las respuestas — mitiga robo de token por XSS. Bootstrap de sesión vía `GET /api/users/me` en `useAuth()`.
 
 ### Decisiones técnicas relevantes:
 - Packets `Microsoft.AspNetCore.*` y `Microsoft.EntityFrameworkCore.*` alineados a **9.0.14** (compatible con `net9.0`).
@@ -25,6 +26,10 @@ Marketplace de oficios tipo Red Social Laboral. La experiencia de usuario debe s
 - `IUnitOfWork` centraliza `SaveChangesAsync`; repositorios solo trackean cambios.
 - `CreatedAt` en Domain mapeado a columna legacy `FechaCreacion` (sin migración destructiva).
 - **JobRequest.ImageUrls:** mapeado con `PrimitiveCollection` (columna JSON `ImageUrls` en SQL Server).
+- **Cookie de sesión (`AuthCookies`, Api):** `HttpOnly` + `Secure=true` + `SameSite=None`. Frontend (`:3000`) y Api (`:7086`) son orígenes distintos para el navegador (scheme http vs https = "schemeful same-site"), por eso `SameSite=None` es obligatorio y exige que la Api corra siempre en HTTPS, incluso en desarrollo (`dotnet run --launch-profile https`).
+- **CORS con credenciales:** `AllowCredentials()` + whitelist explícita de orígenes (`Cors:AllowedOrigins`); no es compatible con `AllowAnyOrigin()`.
+- **Extracción de JWT desde cookie:** `JwtBearerEvents.OnMessageReceived` en `Program.cs` lee `oficia_access_token` solo si no vino un header `Authorization` explícito (prioridad para Swagger/Postman/tests).
+- **Mitigación CSRF:** sin token CSRF dedicado. Se apoya en que los endpoints de escritura exigen `Content-Type: application/json` (un `<form>` cross-site no puede setear ese header sin JS) + CORS restringido a orígenes de la whitelist. Válido mientras la Api sea JSON-only; revisar si en el futuro se aceptan `multipart/form-data` o `x-www-form-urlencoded`.
 - **Git al cerrar tarea:** el agente solo sugiere `git commit -m "..."` (Conventional Commits, mensaje en inglés). **No** incluir `git add`; el staging lo hace el desarrollador.
 
 ---
@@ -38,19 +43,21 @@ Marketplace de oficios tipo Red Social Laboral. La experiencia de usuario debe s
 - ✅ **Refactor Hexagonal:** Ports In/Out, UseCases, security adapters, UoW, composition root, Domain hygiene.
 - ✅ **Sprint 15 — Feed inmersivo (Backend):** Domain (`Post` rico, cursor-based), Ports In/Out, `PostService`, `PostRepository` (paginación por cursor `CreatedAt`+`Id`), `PostsController` (`POST /api/posts` `[Authorize]`, `GET /api/posts/feed` `[AllowAnonymous]`), migración `AddPostEntity` aplicada.
 - ✅ **Sprint de Fixes — Límites de longitud `JobRequest`:** `TitleMaxLength=100`, `DescriptionMaxLength=2000`, `ImageUrlsMaxLength=2048` (por URL) + `MaxImagesUrls=10` (cantidad) en Domain; Fluent API (`HasMaxLength` en `Title`/`Description`, `PrimitiveCollection(...).ElementType().HasMaxLength(...)` en `ImageUrls`); migración `AddJobRequestLengthLimits` aplicada.
+- ✅ **Sprint 16 — Integración Frontend:** sesión JWT vía cookie `httpOnly` (`AuthCookies`, `Program.cs`, `UsersController.Login/Logout/Me`) + `[Required]/[EmailAddress]/[MinLength]` en `LoginUserDto`/`RegisterUserDto`; `api-client.ts` + `ApiError`; `authService` + `auth-store` (Zustand) + `useAuth`; `QueryClientProvider` (`app/providers.tsx`); Explorar conectado a `GET /api/categories` + `GET /api/professional-profile/search`; Radar conectado a `GET /api/job-requests/open` (requiere sesión); UI de login/registro/logout en `ProfileView`. Probado E2E con `curl` (cookie set/leída/borrada, 401 sin sesión, CORS preflight con credenciales).
 
 ## 4. FOCO ACTUAL: Sprint Fix / siguiente feature
 
-**Completado:** Hexagonal + Radar JobRequest (14.4–14.5) + Feed Post (Sprint 15) + Fix límites de longitud `JobRequest`.
+**Completado:** Hexagonal + Radar JobRequest (14.4–14.5) + Feed Post (Sprint 15) + Fix límites de longitud `JobRequest` + Sprint 16 (Integración Frontend: auth + Explorar + Radar).
 
 ### Próximo:
-- Sprint 16: Integración Frontend.
+- Sprint 17: Feed inmersivo (Frontend).
 
 ---
 
 ## 5. BACKLOG
-- Sprint 16: Integración Frontend — `.env.local`, `authService.ts`, TanStack Query en Explorar/Radar.
 - Sprint 17: Feed inmersivo (Frontend) — conectar `PostsController` al pilar Feed (scroll infinito con cursor).
+- Sprint 18: Solicitudes (Frontend) — conectar `POST /api/job-requests` (creación) y listado propio del cliente; hoy `RequestsView` sigue en mock.
+- Conectar `ClientProfile`/`ProfessionalProfile` reales a `ProfileView` (hoy solo username/email vienen de la Api; stats, historial y avatar siguen mock).
 
 ---
 
@@ -74,3 +81,10 @@ Marketplace de oficios tipo Red Social Laboral. La experiencia de usuario debe s
 ### Resuelto en Sprint de Fixes (post-Sprint 15)
 - [x] **Límites de longitud** en `JobRequest.Title` / `Description` / `ImageUrl` — Domain + Fluent API + migración aplicada.
 - [x] **Nota técnica:** en `PrimitiveCollection` (JSON), `HasMaxLength()` directo sobre la colección limita el string completo de la columna (todas las URLs concatenadas en JSON), no cada elemento — hay que encadenar `.ElementType().HasMaxLength(...)`. Aun así, ese `ElementType().HasMaxLength()` no genera DDL (no hay columna real por URL); la enforcement de longitud por URL vive únicamente en el guard del Dominio (`AddImageUrl`), que es el lugar correcto en Clean Architecture.
+
+### Vigente (detectada en Sprint 16)
+- [ ] **`AuthResponseDto.Token` sigue existiendo en Application** aunque `UsersController.Login` ya no lo expone en el body (solo va en la cookie httpOnly). No bloquea nada, pero el DTO miente sobre lo que realmente viaja al cliente; evaluar si el "shape público" de login debería vivir como un DTO propio de Api en vez de reusar `AuthResponseDto`.
+- [ ] **Sin rate limiting / lockout en `POST /api/users/login`.** Hoy nada impide fuerza bruta de contraseñas. Candidato a `AspNetCoreRateLimit` o middleware nativo de .NET 9 (`AddRateLimiter`) antes de exponer la Api fuera de localhost.
+- [ ] **Sin rotación/refresh token.** El JWT expira a los 120 min y el usuario debe volver a loguearse manualmente (no hay silent refresh). Aceptable para el MVP actual; revisar si la fricción de UX lo justifica en un sprint futuro.
+- [ ] **`ProfileView` mezcla datos reales (username/email) con mock** (stats, historial de contratos, avatar) hasta que se conecten `ClientProfile`/`ProfessionalProfile` reales (ver Backlog §5).
+- [ ] **Heurística "verificado" en Explorar** (`pro.yearsOfExperience >= 5` en `explore-view.tsx`) es un placeholder visual, no un flag real de verificación del backend.
