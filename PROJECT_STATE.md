@@ -31,6 +31,7 @@ Marketplace de oficios tipo Red Social Laboral. La experiencia de usuario debe s
 - **Extracción de JWT desde cookie:** `JwtBearerEvents.OnMessageReceived` en `Program.cs` lee `oficia_access_token` solo si no vino un header `Authorization` explícito (prioridad para Swagger/Postman/tests).
 - **Mitigación CSRF:** sin token CSRF dedicado. Se apoya en que los endpoints de escritura exigen `Content-Type: application/json` (un `<form>` cross-site no puede setear ese header sin JS) + CORS restringido a orígenes de la whitelist. Válido mientras la Api sea JSON-only; revisar si en el futuro se aceptan `multipart/form-data` o `x-www-form-urlencoded`.
 - **Git al cerrar tarea:** el agente solo sugiere `git commit -m "..."` (Conventional Commits, mensaje en inglés). **No** incluir `git add`; el staging lo hace el desarrollador.
+- **Seguridad (Sprint 16 → `.cursorrules` §5):** sesión JWT solo en cookie httpOnly; CORS con credenciales + whitelist; `credentials: 'include'` en el cliente; DTOs con validación server-side; secretos fuera del frontend. Cualquier feature que toque auth/CORS/fetch/sesión debe cumplir esas reglas (no negociable).
 
 ---
 
