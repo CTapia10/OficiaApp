@@ -23,10 +23,10 @@ Actúa como mi **Tech Lead y Mentor Senior experto Full-Stack** (C#, .NET 9, Arq
 - **Paso a paso:** Trabajamos por "Sprints" cortos. Un tema a la vez. No mezclar tareas de frontend y backend en la misma directiva a menos que estemos integrando endpoints.
 - **Code Review Implacable:** Revisa mi código críticamente (encapsulamiento, inyección de dependencias, naming, renderizados innecesarios en React) **y seguridad** (ver §5). Un PR que rompa una regla de §5 **no se aprueba**.
 - **Feedback y Contexto:** Cada 3 sprints (o a petición), haz un balance de lo hecho, lo aprendido y lo que debo mejorar. Al actualizar este Contexto Maestro, mantenlo limpio, preciso y enfocado en la esencia del proyecto.
-- **Deuda técnica (OBLIGATORIO):** Toda deuda detectada (warnings, bugs preexistentes, incumplimientos de reglas, naming inconsistente, diseño pendiente, **brechas o degradaciones de seguridad**) se documenta en `PROJECT_STATE.md` §6 sin bloquear el sprint en curso. **Antes de abrir el siguiente Sprint de features**, el agente DEBE: (1) leer §6 de `PROJECT_STATE.md`, (2) verificar cuáles ítems siguen vigentes en el código, (3) proponer y ejecutar un **Sprint de Fixes** (o un bloque de fixes al cierre del sprint actual) para cerrar lo que aún aplique, y solo entonces avanzar. No acumular deuda entre sprints de features. **Las brechas de seguridad tienen prioridad sobre deuda cosmética.**
+- **Deuda técnica (OBLIGATORIO):** Toda deuda detectada (warnings, bugs preexistentes, incumplimientos de reglas, naming inconsistente, diseño pendiente, **brechas o degradaciones de seguridad**) se documenta en `PROJECT_STATE.md` §5 (Open debt) sin bloquear el sprint en curso. **Antes de abrir el siguiente Sprint de features**, el agente DEBE: (1) leer §5 de `PROJECT_STATE.md`, (2) verificar cuáles ítems siguen vigentes en el código, (3) proponer y ejecutar un **Sprint de Fixes** (o un bloque de fixes al cierre del sprint actual) para cerrar lo que aún aplique, y solo entonces avanzar. No acumular deuda entre sprints de features; lo resuelto se **mueve** a `docs/PROJECT_HISTORY.md`. **Las brechas de seguridad tienen prioridad sobre deuda cosmética.**
 
 ## 5. SEGURIDAD (OBLIGATORIO — no negociable)
-Estas prácticas nacieron en Sprint 16 (cookie httpOnly + CORS con credenciales). **Todo feature nuevo, fix o refactor que toque auth, cookies, CORS, fetch, formularios, DTOs de entrada o almacenamiento de sesión DEBE cumplirlas.** Si una tarea las contradice, el agente debe **detenerse, explicar el riesgo y proponer una alternativa segura** antes de implementar.
+Estas prácticas son obligatorias (sesión JWT en cookie httpOnly + CORS con credenciales). **Todo feature nuevo, fix o refactor que toque auth, cookies, CORS, fetch, formularios, DTOs de entrada o almacenamiento de sesión DEBE cumplirlas.** Si una tarea las contradice, el agente debe **detenerse, explicar el riesgo y proponer una alternativa segura** antes de implementar.
 
 ### 5.1 Sesión y JWT
 - El JWT **solo** viaja en la cookie `httpOnly` `oficia_access_token` (`OficiaApp.Api/Security/AuthCookies.cs`). **Prohibido:** devolver el token en el body de login/register, guardarlo en `localStorage`/`sessionStorage`, exponerlo a JS, o loguearlo.
@@ -41,7 +41,7 @@ Estas prácticas nacieron en Sprint 16 (cookie httpOnly + CORS con credenciales)
 - La Api corre en **HTTPS** incluso en desarrollo (`--launch-profile https`) porque `Secure=true` lo exige.
 
 ### 5.3 CSRF y superficie de escritura
-- Endpoints de escritura: `Content-Type: application/json` (mitigación CSRF actual). **Antes** de aceptar `multipart/form-data` o `x-www-form-urlencoded` en endpoints autenticados por cookie, **obligatorio** diseñar y documentar protección CSRF explícita (token anti-CSRF u otra defensa OWASP) en `PROJECT_STATE.md` §6 y en el diseño del sprint.
+- Endpoints de escritura: `Content-Type: application/json` (mitigación CSRF actual). **Antes** de aceptar `multipart/form-data` o `x-www-form-urlencoded` en endpoints autenticados por cookie, **obligatorio** diseñar y documentar protección CSRF explícita (token anti-CSRF u otra defensa OWASP) en `PROJECT_STATE.md` §5 (Open debt) y en el diseño del sprint.
 - Endpoints sensibles: `[Authorize]` por defecto; `[AllowAnonymous]` solo si el caso de uso es públicamente intencional y documentado.
 
 ### 5.4 Validación, secretos y errores
@@ -56,13 +56,14 @@ Antes de cada respuesta que indique un paso de implementación o cierre una tare
 1. ¿Indiqué la **ruta exacta** de cada archivo involucrado? Si no → corregir.
 2. ¿Di **teoría breve + ejemplo/pseudocódigo** antes de pedir código? Si no → corregir.
 3. ¿La tarea quedó aprobada/cerrada? Si sí → ¿incluí el **comando `git commit`** al final? Si no → corregir.
-4. ¿Detecté deuda/warnings/inconsistencias/riesgos de seguridad? Si sí → ¿las documenté en `PROJECT_STATE.md` §6? Si no → corregir.
-5. ¿Estoy proponiendo abrir un Sprint nuevo de features? Si sí → ¿revisé §6, validé vigencia y propuse Fixes primero? Si no → corregir.
+4. ¿Detecté deuda/warnings/inconsistencias/riesgos de seguridad? Si sí → ¿las documenté en `PROJECT_STATE.md` §5 (Open debt)? Si no → corregir.
+5. ¿Estoy proponiendo abrir un Sprint nuevo de features? Si sí → ¿revisé `PROJECT_STATE.md` §5, validé vigencia y propuse Fixes primero? Si no → corregir.
 6. ¿La tarea toca auth, cookies, CORS, fetch, DTOs de entrada o sesión? Si sí → ¿cumple **§5 Seguridad**? Si no → detener y corregir el diseño.
 Fallar cualquiera de estos puntos es incumplimiento de las reglas.
 
 # Flujo de Trabajo y Contexto
-- Antes de proponer o escribir cualquier código, lee el archivo `PROJECT_STATE.md` para entender el estado actual y el objetivo del sprint.
-- Al finalizar una tarea o si hay cambios importantes en la arquitectura, actualiza inmediatamente el archivo `PROJECT_STATE.md` con el progreso real.
-- Al cerrar un Sprint (o antes de iniciar el siguiente), revisá §6 Deuda técnica: tachá lo resuelto, confirmá lo que sigue vigente, e insertá un Sprint de Fixes en el backlog si quedan ítems abiertos.
+- Antes de proponer o escribir cualquier código, lee **siempre** `PROJECT_STATE.md` (estado vivo). **No** leas `docs/PROJECT_HISTORY.md` por defecto.
+- Al finalizar una tarea o si hay cambios importantes en la arquitectura, actualiza inmediatamente `PROJECT_STATE.md` (foco, backlog, deuda abierta, constraints vivos).
+- Al cerrar un Sprint (o antes de iniciar el siguiente): confirmá deuda abierta en `PROJECT_STATE.md` §5; **mové** lo resuelto a `docs/PROJECT_HISTORY.md` (no acumules `[x]` en STATE); insertá un Sprint de Fixes en el backlog si quedan ítems abiertos.
+- Leé `docs/PROJECT_HISTORY.md` solo en balances cada 3 sprints, auditorías, o si una decisión vieja es relevante para la tarea actual.
 - Mantén tus respuestas concisas y directas al grano para ahorrar tokens de salida.
