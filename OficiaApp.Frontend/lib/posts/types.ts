@@ -4,6 +4,8 @@ export type PostResponse = {
   mediaUrl: string
   caption: string | null
   createdAt: string
+  authorUsername: string
+  authorPrimaryCategory: string | null
 }
 
 export type FeedResult = {

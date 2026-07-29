@@ -4,7 +4,7 @@
 
 ## 1. Now
 
-- **Last closed:** Sprint 17 — Feed (Frontend) wired to `GET /api/posts/feed` with cursor infinite scroll.
+- **Last closed:** Fixes sprint (post-Sprint 17) — Feed `take` clamp + author snapshot in `PostResponseDto`. Open debt cleared.
 - **Next:** Sprint 18 — Requests (Frontend): `POST /api/job-requests` + client's own list.
 
 ## 2. Stack map
@@ -19,7 +19,7 @@
 - **UI:** Tailwind, shadcn/ui, Lucide, Mobile-First.
 - **State:** Zustand (`lib/auth/auth-store.ts` — profile only, never JWT) + TanStack Query (`app/providers.tsx`).
 - **API:** `lib/api/api-client.ts` (`apiFetch`, `credentials: 'include'`, `ApiError`) + domain services + `hooks/use-*.ts`.
-- **Mock vs real:** Feed now real (`lib/posts/posts-service.ts` + `hooks/use-feed.ts`, `useInfiniteQuery` cursor pagination). Requests still mock (`lib/oficia-data.ts`). Explore + Radar + Profile (username/email) consume the Api. Session bootstrap: `GET /api/users/me` via `useAuth()`.
+- **Mock vs real:** Feed now real (`lib/posts/posts-service.ts` + `hooks/use-feed.ts`, `useInfiniteQuery` cursor pagination), `PostResponseDto` includes author snapshot (`authorUsername`, `authorPrimaryCategory`) — no avatar field yet (Domain has none, see backlog). Requests still mock (`lib/oficia-data.ts`). Explore + Radar + Profile (username/email) consume the Api. Session bootstrap: `GET /api/users/me` via `useAuth()`.
 
 ## 3. Living constraints
 
@@ -33,7 +33,7 @@
 - `JobRequest.ImageUrls`: EF `PrimitiveCollection` (JSON column). Per-URL length enforced in Domain, not DDL.
 - Cookie JWT extraction: `JwtBearerEvents.OnMessageReceived` reads `oficia_access_token` only if no `Authorization` header (Swagger/Postman priority).
 - Login: fixed-window rate limit policy `"login"` (per IP). No account lockout entity yet.
-- **Perf — list endpoints:** server-side page size clamp required (feed `take` still unbounded — see Open debt; when fixed, record the concrete max here, e.g. 50).
+- **Perf — list endpoints:** server-side page size clamp is the required pattern for any new list endpoint. Feed (`PostService.GetFeedAsync`): `take` clamped server-side to `[1, 50]` (`DefaultPageSize=10`, `MaxPageSize=50`), invalid/zero/negative falls back to default.
 - **Perf — Feed FE:** cursor + `useInfiniteQuery` is the pattern for similar long lists (Radar, Requests); do not load unbounded collections into the client.
 - **Perf — agent:** features that touch listados/queries/media/payloads must pass `.cursorrules` §7 checklist item 7 (§6 Performance).
 - Agent git close-out: suggest `git commit -m "..."` only (Conventional Commits, English). **Do not** include `git add`; developer stages.
@@ -46,10 +46,11 @@
 - **Refresh-token rotation** when UX friction after 120 min access TTL grows.
 - **`IsVerified`** on `ProfessionalProfile` + Explore DTO (when a verification process exists).
 - Wire real `ClientProfile` / `ProfessionalProfile` into `ProfileView` (stats, history, avatar still mock).
+- **Social feed interactions (new Domain concept):** `Like`/`Comment` entities + migrations + endpoints + write-path CSRF design (`.cursorrules` §5.3, since likes/comments are writes) before `FeedCard`'s like/comment/share buttons can be wired to real counters. Sized as its own feature sprint, not a fix (no entities exist today).
+- **Author avatar in feed:** no `AvatarUrl` (or equivalent media field) exists on `User`/`ProfessionalProfile` yet — needs Domain field + migration + upload/storage design before `PostResponseDto` can carry a real avatar. `FeedCard` shows a generic icon until then.
 
 ## 5. Open debt
 
 > Agent adds open items here without blocking the current sprint. Before the next feature sprint: validate each item still applies, run a Fixes sprint (or end-of-sprint fixes block). Move resolved items to `docs/PROJECT_HISTORY.md` — do not keep `[x]` here. Priority: security > perf that scales badly > cosmetic.
 
-- `PostResponseDto` has no author snapshot (`professionalProfileId` only, no name/avatar/rubro) nor social counters (likes/comments/shares). `FeedCard` was simplified to real fields; Pillar 1 (immersive feed) needs either an enriched feed DTO or a public "get professional profile by id" endpoint before social proof UI can come back. **Perf note:** hydrating author per card via N profile fetches would create an FE waterfall/N+1 — prefer DTO snapshot over per-item requests.
-- **Perf + DoS:** `PostsController.GetFeed` / `PostService.GetFeedAsync` `take` param has no upper bound — a client can request an arbitrarily large page. Needs server-side clamp (e.g. `Math.Min(take, 50)`). Violates `.cursorrules` §6.2.
+_None open._

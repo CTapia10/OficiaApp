@@ -5,4 +5,6 @@ public record PostResponseDto(
     Guid ProfessionalProfileId,
     string MediaUrl,
     string? Caption,
-    DateTime CreatedAt);
+    DateTime CreatedAt,
+    string AuthorUsername,
+    string? AuthorPrimaryCategory);

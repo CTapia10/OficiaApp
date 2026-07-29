@@ -15,6 +15,7 @@
 - ✅ **Fixes sprint — JobRequest length limits:** `TitleMaxLength=100`, `DescriptionMaxLength=2000`, `ImageUrlsMaxLength=2048` (per URL) + `MaxImagesUrls=10` in Domain; Fluent API (`HasMaxLength` on `Title`/`Description`, `PrimitiveCollection(...).ElementType().HasMaxLength(...)` on `ImageUrls`); migration `AddJobRequestLengthLimits` applied.
 - ✅ **Sprint 16 — Frontend integration:** JWT via httpOnly cookie (`AuthCookies`, `Program.cs`, `UsersController.Login/Logout/Me`) + `[Required]`/`[EmailAddress]`/`[MinLength]` on `LoginUserDto`/`RegisterUserDto`; `api-client.ts` + `ApiError`; `authService` + `auth-store` (Zustand) + `useAuth`; `QueryClientProvider` (`app/providers.tsx`); Explore wired to `GET /api/categories` + `GET /api/professional-profile/search`; Radar wired to `GET /api/job-requests/open` (requires session); login/register/logout UI in `ProfileView`. E2E verified with `curl` (cookie set/read/cleared, 401 without session, CORS preflight with credentials).
 - ✅ **Fixes sprint (post-Sprint 16):** `docs/PRODUCT_MAP.md`; login identity DTO without Token (Api issues JWT); rate limit on login; Explore verified heuristic removed; Open debt cleared.
+- ✅ **Fixes sprint (post-Sprint 17):** Feed `take` server-side clamp (DoS fix); `PostResponseDto` author snapshot (`authorUsername`, `authorPrimaryCategory`); Open debt cleared.
 
 ## Resolved debt
 
@@ -38,3 +39,8 @@
 - [x] **Explore “verified” heuristic removed** — no `BadgeCheck` from `yearsOfExperience >= 5`; real `IsVerified` deferred to backlog.
 - [x] **Product map** — `docs/PRODUCT_MAP.md` (roles, pillars, Radar ↔ Mis solicitudes, `JobApplication` → `JobContract` on accept).
 - [x] **MVP decisions (not debt):** refresh-token rotation deferred (120 min re-login OK); ProfileView mock stats/history/avatar until profiles wired; Radar apply/geo tracked in backlog.
+
+### Fixes sprint (post-Sprint 17 — close Open debt)
+- [x] **Perf + DoS — Feed `take` unbounded:** `PostService.GetFeedAsync` now clamps server-side to `[1, MaxPageSize=50]` (`DefaultPageSize=10` on invalid/zero/negative input). `PostsController.GetFeed` unchanged (clamp lives in Application, not Api, so any future caller gets the same guarantee).
+- [x] **`PostResponseDto` author snapshot:** added `AuthorUsername` (from `User.Username`) and `AuthorPrimaryCategory` (first `ProfessionalProfile.Category.Name`, nullable) to `PostResponseDto`. `PostRepository.GetFeedAsync` now does `Include(ProfessionalProfile).ThenInclude(User)` + `Include(ProfessionalProfile).ThenInclude(Categories)` (single query, no N+1) instead of hydrating per-card. `FeedCard` (`OficiaApp.Frontend/components/oficia/feed-view.tsx`) shows real username + rubro instead of the "Profesional" placeholder.
+- [x] **Split from the debt item:** social counters (likes/comments/shares) and author avatar were **not** implemented — no `Like`/`Comment` entities or avatar field exist in Domain; building them is new feature scope (new entities, migrations, endpoints, CSRF design for likes/comments as writes), not a fix. Moved to `PROJECT_STATE.md` §4 Backlog as explicit future sprints instead of lingering as vague Open debt.

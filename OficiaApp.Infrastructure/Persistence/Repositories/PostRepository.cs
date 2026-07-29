@@ -21,7 +21,12 @@ public class PostRepository : IPostRepository
 
     public async Task<IReadOnlyList<Post>> GetFeedAsync(DateTime? cursorCreatedAt, Guid? cursorId, int take)
     {
-        IQueryable<Post> query = _context.Posts.AsNoTracking();
+        IQueryable<Post> query = _context.Posts
+            .AsNoTracking()
+            .Include(p => p.ProfessionalProfile)
+                .ThenInclude(pp => pp.User)
+            .Include(p => p.ProfessionalProfile)
+                .ThenInclude(pp => pp.Categories);
 
         if (cursorCreatedAt.HasValue && cursorId.HasValue)
         {

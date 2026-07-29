@@ -106,7 +106,12 @@ function FeedCard({ post }: { post: PostResponse }) {
             <UserRound className="size-6 text-white" />
           </span>
           <div className="min-w-0">
-            <p className="truncate font-semibold text-white">Profesional</p>
+            <p className="truncate font-semibold text-white">
+              {post.authorUsername}
+              {post.authorPrimaryCategory ? (
+                <span className="font-normal text-white/70"> · {post.authorPrimaryCategory}</span>
+              ) : null}
+            </p>
             <p className="truncate text-sm text-white/70">{formatRelativeTime(post.createdAt)}</p>
           </div>
         </div>
