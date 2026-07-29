@@ -16,6 +16,7 @@
 - ✅ **Sprint 16 — Frontend integration:** JWT via httpOnly cookie (`AuthCookies`, `Program.cs`, `UsersController.Login/Logout/Me`) + `[Required]`/`[EmailAddress]`/`[MinLength]` on `LoginUserDto`/`RegisterUserDto`; `api-client.ts` + `ApiError`; `authService` + `auth-store` (Zustand) + `useAuth`; `QueryClientProvider` (`app/providers.tsx`); Explore wired to `GET /api/categories` + `GET /api/professional-profile/search`; Radar wired to `GET /api/job-requests/open` (requires session); login/register/logout UI in `ProfileView`. E2E verified with `curl` (cookie set/read/cleared, 401 without session, CORS preflight with credentials).
 - ✅ **Fixes sprint (post-Sprint 16):** `docs/PRODUCT_MAP.md`; login identity DTO without Token (Api issues JWT); rate limit on login; Explore verified heuristic removed; Open debt cleared.
 - ✅ **Fixes sprint (post-Sprint 17):** Feed `take` server-side clamp (DoS fix); `PostResponseDto` author snapshot (`authorUsername`, `authorPrimaryCategory`); Open debt cleared.
+- ✅ **Sprint Testing (Backend):** `OficiaApp.Domain.Tests` + `OficiaApp.Application.Tests` (xUnit, FluentAssertions, NSubstitute); `JobRequest` invariants; `UserService` register/login; `PostService` take clamp + cursor + create guards. CI workflow deferred to Open debt.
 
 ## Resolved debt
 
