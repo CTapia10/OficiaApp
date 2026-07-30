@@ -1,0 +1,12 @@
+# pnpm project settings (pnpm 10+/11 reads these from here, not package.json).
+# allowBuilds: packages whose install scripts (postinstall/etc.) are allowed
+# to run on this machine. msw = Mock Service Worker (pulled by Vitest/Vite);
+# sharp = image processing (pulled by Next.js). Both are well-known packages.
+allowBuilds:
+  msw: true
+  sharp: true
+
+# Pin hono (transitive via shadcn tooling) to a known-good version.
+# Was previously under package.json "pnpm.overrides", which pnpm 11 ignores.
+overrides:
+  hono: 4.12.25
