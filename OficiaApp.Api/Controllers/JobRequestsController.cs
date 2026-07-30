@@ -60,6 +60,34 @@ public class JobRequestsController : ControllerBase
         }
     }
 
+    [HttpGet("my")]
+    public async Task<IActionResult> GetMy([FromQuery] int take = 10, [FromQuery] int skip = 0)
+    {
+        try
+        {
+            var userId = GetUserId();
+            if (userId == null)
+            {
+                return Unauthorized(new { message = "User ID not found in claims." });
+            }
+
+            var results = await _jobRequestService.GetByUserIdAsync(userId.Value, take, skip);
+            return Ok(results);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (ArgumentException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { message = "An error occurred while listing my job requests." });
+        }
+    }
+
     private Guid? GetUserId()
     {
         var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

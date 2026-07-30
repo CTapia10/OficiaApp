@@ -11,6 +11,9 @@ public class JobRequestService : IJobRequestService
     private readonly ICategoryRepository _categoryRepository;
     private readonly IJobRequestRepository _jobRequestRepository;
     private readonly IUnitOfWork _unitOfWork;
+    // Server-side clamp: prevents an unbounded `take` from becoming a DoS / large-payload vector (.cursorrules §6.2).
+    private const int DefaultPageSize = 10;
+    private const int MaxPageSize = 50;
 
     public JobRequestService(
         IUserRepository userRepository,
@@ -73,4 +76,20 @@ public class JobRequestService : IJobRequestService
             jobRequest.Status.ToString(),
             jobRequest.ImageUrls.ToList(),
             jobRequest.CreatedAt);
+
+    public async Task<IEnumerable<JobRequestResponseDto>> GetByUserIdAsync(Guid userId, int take, int skip)
+    {
+        var user = await _userRepository.GetByIdAsync(userId);
+        if (user == null)
+        {
+            throw new ArgumentException("User not found", nameof(userId));
+        }
+        if (user.ClientProfile == null)
+        {
+            throw new InvalidOperationException("User does not have a client profile.");
+        }
+        var clampedTake = take <= 0 ? DefaultPageSize : Math.Min(take, MaxPageSize);
+        var jobRequests = await _jobRequestRepository.GetByClientProfileIdAsync(user.ClientProfile.Id, clampedTake, skip);
+        return jobRequests.Select(MapToDto);
+    }
 }

@@ -20,7 +20,7 @@ public class JobRequestRepository : IJobRequestRepository
         await _context.JobRequests.AddAsync(jobRequest);
     }
 
-    public async Task<IEnumerable<JobRequest>> GetOpenAsync()
+    public async Task<IReadOnlyList<JobRequest>> GetOpenAsync()
     {
         return await _context.JobRequests
             .AsNoTracking()
@@ -32,5 +32,16 @@ public class JobRequestRepository : IJobRequestRepository
     public async Task<JobRequest?> GetByIdAsync(Guid id)
     {
         return await _context.JobRequests.FirstOrDefaultAsync(j => j.Id == id);
+    }
+
+    public async Task<IReadOnlyList<JobRequest>> GetByClientProfileIdAsync(Guid clientProfileId, int take, int skip)
+    {
+        return await _context.JobRequests
+            .AsNoTracking()
+            .Where(j => j.ClientProfileId == clientProfileId)
+            .OrderByDescending(j => j.CreatedAt)
+            .Skip(skip)
+            .Take(take)
+            .ToListAsync();
     }
 }

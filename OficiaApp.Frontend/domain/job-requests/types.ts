@@ -1,4 +1,4 @@
-export type JobRequestStatus = 'Open' | 'InProgress' | 'Closed' | string
+export type JobRequestStatus = 'Pending' | 'Accepted' | 'InProgress' | 'Rejected' | 'Completed' | 'Cancelled'
 
 export type JobRequestResponse = {
   id: string
@@ -9,4 +9,11 @@ export type JobRequestResponse = {
   status: JobRequestStatus
   imageUrls: string[]
   createdAt: string
+}
+
+export type CreateJobRequestPayload = {
+  categoryId: string
+  title: string
+  description: string
+  imageUrls: string[]
 }

@@ -10,9 +10,9 @@
 
 
 
-- **Last closed:** Sprint de Fixes (deuda §5) — (1) ✅ Vitest + Testing Library en FE. (2) ✅ CI: `.github/workflows/ci.yml` (`backend-tests`: `dotnet test OficiaApp.sln`; `frontend-tests`: `vitest run`) on push/PR to `main`.
+- **Last closed:** Sprint 18 (read side) — `GET /api/job-requests/my` (Api/Application/Infra, clamp `take` + `IReadOnlyList` consistente en `IJobRequestRepository`) + FE wiring: `jobRequestsApi.getMy/create` (port+adapter), `useMyJobRequests`, `RequestsView` conectado a datos reales (categoría resuelta vía `useCategories`, badge con los 6 status reales del enum, sin `budget`/`proName`/`quotes` — dependen de `JobApplication`, backlog aparte). FE test: `use-my-job-requests.test.tsx` (primer test de hook + TanStack Query del proyecto, patrón: `renderHook` + `QueryClientProvider` wrapper + `vi.mock` del adapter, sin MSW).
 
-- **Next:** Sprint 18 — Requests (Frontend): `POST /api/job-requests` + client's own list; wire `RequestsView`. FE tests en el mismo sprint (Vitest ya disponible).
+- **Next:** Sprint 18 (write side) — formulario de creación detrás del botón "Nueva" en `RequestsView` (`POST /api/job-requests` ya existe en el backend) + `useCreateJobRequest` (mutation) + invalidación de la query `['job-requests', 'mine']` al crear. Incluir FE test de la mutation/formulario.
 
 
 
@@ -48,7 +48,7 @@
 
 - **app/** — Next.js App Router (delivery) + TanStack Query (`app/providers.tsx`).
 
-- **Mock vs real:** Feed real (posts adapter + `use-feed`); Requests still mock (`presentation/mocks/oficia-data.ts`). Explore + Radar + Profile consume Api. Session: `GET /api/users/me` via `useAuth()`.
+- **Mock vs real:** Feed real (posts adapter + `use-feed`); Requests read-side real (`use-my-job-requests` + `RequestsView`), create form still pending (backlog). Explore + Radar + Profile consume Api. Session: `GET /api/users/me` via `useAuth()`.
 
 - **Tests FE:** Vitest + Testing Library installed (`vitest.config.ts`, `vitest.setup.ts`, `pnpm test`). First test: `presentation/lib/utils.test.ts`. `allowBuilds` for `msw`/`sharp` approved in `pnpm-workspace.yaml`.
 
@@ -124,5 +124,7 @@
 
 
 
-_(none)_
+- **Perf — `JobRequestRepository.GetOpenAsync` (Radar) sin límite:** devuelve *todas* las `JobRequest` en `Pending` sin `take`/cursor (`OficiaApp.Infrastructure/Persistence/Repositories/JobRequestRepository.cs`). Con 10x de solicitudes esto es un payload sin tope (viola §6.2). No se toca en Sprint 18 (foco: lista propia del cliente, acotada por usuario) — atender cuando se aborde "Radar apply (pro)" en el backlog.
+
+- **Build roto (detectado, no bloquea foco elegido):** `IJobRequestRepository.GetByClientProfileIdAsync(Guid, int, int)` ya está declarado pero `JobRequestRepository` no lo implementa → `dotnet build` falla ahora mismo. Es justo el primer paso del Sprint 18 en curso.
 
