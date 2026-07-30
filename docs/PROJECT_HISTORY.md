@@ -17,6 +17,7 @@
 - ✅ **Fixes sprint (post-Sprint 16):** `docs/PRODUCT_MAP.md`; login identity DTO without Token (Api issues JWT); rate limit on login; Explore verified heuristic removed; Open debt cleared.
 - ✅ **Fixes sprint (post-Sprint 17):** Feed `take` server-side clamp (DoS fix); `PostResponseDto` author snapshot (`authorUsername`, `authorPrimaryCategory`); Open debt cleared.
 - ✅ **Sprint Testing (Backend):** `OficiaApp.Domain.Tests` + `OficiaApp.Application.Tests` (xUnit, FluentAssertions, NSubstitute); `JobRequest` invariants; `UserService` register/login; `PostService` take clamp + cursor + create guards. CI workflow deferred to Open debt.
+- ✅ **Sprint Hexagonal FE + Testing rules:** `.cursorrules` §7 Testing (DoD) + checklist §8; FE restructured to `domain/` | `application/ports` | `infrastructure/http` | `presentation/` | `app/`; backend hexagonal audit OK (controllers → Ports/In only). Vitest + CI remain Open debt.
 
 ## Resolved debt
 
