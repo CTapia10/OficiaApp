@@ -90,6 +90,8 @@
 
 - Agent git close-out: suggest `git commit -m "..."` only (Conventional Commits, English). **Do not** include `git add`; developer stages.
 
+- **Agent skills (explicit):** `@oficia-spec` (nuevo slice), `@oficia-review` (gate), `@oficia-close` (STATE + commit). Shared scripts: `python .cursor/skills/_oficia/scripts/check_state.py` (no dump this file). Does not replace `.cursorrules`. Do not attach `@oficia-dev` (removed).
+
 
 
 ## 4. Backlog
