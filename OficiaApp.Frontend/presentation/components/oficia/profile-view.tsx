@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import { useState } from 'react'
 import {
   BadgeCheck,
   Star,
@@ -21,7 +22,9 @@ import { useAuth } from '@/presentation/hooks/use-auth'
 import type { AuthUser } from '@/domain/auth/types'
 import { useUserMode } from './user-mode'
 import { ModeSwitch } from './mode-switch'
-import { AuthGate } from './auth-forms'
+import { AuthGate } from './auth-gate'
+import { ProOnboardingForm } from './pro-onboarding-form'
+import type { TabId } from '@/presentation/context/app-navigation'
 
 const proHistory = [
   {
@@ -83,16 +86,29 @@ function LogoutButton() {
 }
 
 function SettingsList() {
+  const [hint, setHint] = useState<string | null>(null)
+
+  function showComingSoon(label: string) {
+    setHint(label)
+    window.setTimeout(() => setHint(null), 2500)
+  }
+
   return (
     <section className="mt-6">
       <h2 className="mb-3 font-display text-lg font-semibold">
         Cuenta y ajustes
       </h2>
+      {hint && (
+        <p className="mb-2 text-center text-xs text-muted-foreground">
+          {hint} — próximamente
+        </p>
+      )}
       <ul className="overflow-hidden rounded-2xl border border-border bg-card">
         {settings.map((s, i) => (
           <li key={s.id}>
             <button
               type="button"
+              onClick={() => showComingSoon(s.label)}
               className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-accent/40"
             >
               <s.icon className="size-5 text-muted-foreground" />
@@ -109,9 +125,9 @@ function SettingsList() {
   )
 }
 
-/* --- Perfil de cliente (por defecto para todos) --- */
 function ClientProfile({ user }: { user: AuthUser }) {
   const { isPro, activatePro } = useUserMode()
+  const [showProForm, setShowProForm] = useState(false)
 
   return (
     <>
@@ -128,7 +144,9 @@ function ClientProfile({ user }: { user: AuthUser }) {
             />
             <button
               type="button"
-              className="rounded-xl border border-border bg-secondary px-4 py-2 text-sm font-semibold transition-colors hover:bg-accent hover:text-accent-foreground"
+              disabled
+              title="Próximamente: edición de perfil (requiere PATCH en Api)"
+              className="rounded-xl border border-border bg-secondary px-4 py-2 text-sm font-semibold text-muted-foreground opacity-60"
             >
               Editar perfil
             </button>
@@ -160,7 +178,6 @@ function ClientProfile({ user }: { user: AuthUser }) {
         </div>
       </section>
 
-      {/* Convertirse en profesional / cambiar de modo */}
       {isPro ? (
         <section className="mt-6">
           <h2 className="mb-3 font-display text-lg font-semibold">
@@ -170,6 +187,19 @@ function ClientProfile({ user }: { user: AuthUser }) {
           <p className="mt-2 text-center text-xs text-muted-foreground">
             Ya tenés tu perfil profesional. Cambiá de modo cuando quieras.
           </p>
+        </section>
+      ) : showProForm ? (
+        <section className="mt-6 overflow-hidden rounded-3xl border border-border bg-card p-5">
+          <h2 className="font-display text-lg font-bold">Activar perfil profesional</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Completá tus datos para aparecer en Explorar y usar el Radar.
+          </p>
+          <ProOnboardingForm
+            onSuccess={() => {
+              activatePro()
+              setShowProForm(false)
+            }}
+          />
         </section>
       ) : (
         <section className="oficia-gradient mt-6 overflow-hidden rounded-3xl p-5 text-primary-foreground">
@@ -185,7 +215,7 @@ function ClientProfile({ user }: { user: AuthUser }) {
           </p>
           <button
             type="button"
-            onClick={activatePro}
+            onClick={() => setShowProForm(true)}
             className="mt-4 flex items-center gap-1.5 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-primary"
           >
             <Sparkles className="size-4" />
@@ -218,7 +248,6 @@ function ClientProfile({ user }: { user: AuthUser }) {
   )
 }
 
-/* --- Perfil profesional --- */
 function ProProfile({ user }: { user: AuthUser }) {
   return (
     <>
@@ -226,16 +255,18 @@ function ProProfile({ user }: { user: AuthUser }) {
         <div className="oficia-gradient h-24 w-full" />
         <div className="px-4 pb-4">
           <div className="-mt-10 flex items-end justify-between">
-          <Image
-            src="/pro-1.png"
-            alt={user.username}
-            width={88}
-            height={88}
-            className="size-22 rounded-2xl object-cover ring-4 ring-card"
-          />
+            <Image
+              src="/pro-1.png"
+              alt={user.username}
+              width={88}
+              height={88}
+              className="size-22 rounded-2xl object-cover ring-4 ring-card"
+            />
             <button
               type="button"
-              className="rounded-xl border border-border bg-secondary px-4 py-2 text-sm font-semibold transition-colors hover:bg-accent hover:text-accent-foreground"
+              disabled
+              title="Próximamente: edición de perfil (requiere PATCH en Api)"
+              className="rounded-xl border border-border bg-secondary px-4 py-2 text-sm font-semibold text-muted-foreground opacity-60"
             >
               Editar perfil
             </button>
@@ -304,11 +335,10 @@ function ProProfile({ user }: { user: AuthUser }) {
 export function ProfileView({
   onNavigate,
 }: {
-  onNavigate?: (tab: 'inicio' | 'explorar' | 'radar' | 'solicitudes' | 'perfil') => void
+  onNavigate?: (tab: TabId) => void
 }) {
   const { mode } = useUserMode()
   const { user, isCheckingSession } = useAuth()
-  // onNavigate disponible para navegación futura desde el perfil
   void onNavigate
 
   return (

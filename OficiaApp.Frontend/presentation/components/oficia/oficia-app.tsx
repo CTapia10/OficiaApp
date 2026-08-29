@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Home,
   Compass,
@@ -17,9 +17,14 @@ import { RequestsView } from './requests-view'
 import { ProfileView } from './profile-view'
 import { ModeSwitch } from './mode-switch'
 import { UserModeProvider, useUserMode } from './user-mode'
+import { CreateJobRequestDialog } from './create-job-request-dialog'
+import { CreatePostDialog } from './create-post-dialog'
+import {
+  AppNavigationProvider,
+  useAppNavigation,
+  type TabId,
+} from '@/presentation/context/app-navigation'
 import { cn } from '@/presentation/lib/utils'
-
-type TabId = 'inicio' | 'explorar' | 'radar' | 'solicitudes' | 'perfil'
 
 const clientTabs: { id: TabId; label: string; icon: LucideIcon }[] = [
   { id: 'inicio', label: 'Inicio', icon: Home },
@@ -51,10 +56,23 @@ function Logo({ className }: { className?: string }) {
 function AppShell() {
   const { mode, isPro } = useUserMode()
   const [tab, setTab] = useState<TabId>('inicio')
+  const [notificationsHint, setNotificationsHint] = useState(false)
+  const {
+    registerNavigate,
+    createJobRequestOpen,
+    closeCreateJobRequest,
+    createPostOpen,
+    closeCreatePost,
+    openCreateJobRequest,
+    openCreatePost,
+    navigate,
+  } = useAppNavigation()
+
+  useEffect(() => {
+    registerNavigate(setTab)
+  }, [registerNavigate])
 
   const tabs = mode === 'pro' ? proTabs : clientTabs
-
-  // Si el tab activo no existe en el modo actual, volver a inicio.
   const activeTab: TabId = tabs.some((t) => t.id === tab) ? tab : 'inicio'
 
   const views: Record<TabId, React.ReactNode> = {
@@ -62,14 +80,22 @@ function AppShell() {
     explorar: <ExploreView />,
     radar: <RadarView />,
     solicitudes: <RequestsView />,
-    perfil: <ProfileView onNavigate={setTab} />,
+    perfil: <ProfileView onNavigate={navigate} />,
   }
 
   const isFeed = activeTab === 'inicio'
 
+  function handlePrimaryCta() {
+    if (mode === 'pro') {
+      openCreatePost()
+    } else {
+      navigate('solicitudes')
+      openCreateJobRequest()
+    }
+  }
+
   return (
     <div className="flex h-[100dvh] w-full overflow-hidden bg-background md:mx-auto md:max-w-6xl md:border-x md:border-border">
-      {/* Desktop sidebar */}
       <aside className="hidden w-64 shrink-0 flex-col border-r border-border bg-sidebar px-4 py-6 md:flex">
         <Logo className="px-2" />
 
@@ -104,15 +130,14 @@ function AppShell() {
 
         <button
           type="button"
+          onClick={handlePrimaryCta}
           className="oficia-gradient mt-auto rounded-xl py-3 text-sm font-bold text-primary-foreground"
         >
           {mode === 'pro' ? 'Publicar mi trabajo' : 'Solicitar servicio'}
         </button>
       </aside>
 
-      {/* Main column */}
       <div className="relative flex min-w-0 flex-1 flex-col">
-        {/* Mobile top bar (hidden on feed for immersion) */}
         <header
           className={cn(
             'z-20 flex items-center justify-between px-4 py-3 md:hidden',
@@ -127,6 +152,11 @@ function AppShell() {
             <button
               type="button"
               aria-label="Notificaciones"
+              title="Próximamente"
+              onClick={() => {
+                setNotificationsHint(true)
+                window.setTimeout(() => setNotificationsHint(false), 2500)
+              }}
               className={cn(
                 'relative flex size-9 items-center justify-center rounded-full',
                 isFeed ? 'text-white' : 'text-foreground',
@@ -138,10 +168,14 @@ function AppShell() {
           </div>
         </header>
 
-        {/* Active view */}
+        {notificationsHint && (
+          <div className="absolute inset-x-4 top-14 z-30 rounded-xl border border-border bg-card px-4 py-2 text-center text-xs text-muted-foreground md:hidden">
+            Notificaciones — próximamente
+          </div>
+        )}
+
         <main className="min-h-0 flex-1">{views[activeTab]}</main>
 
-        {/* Mobile bottom navigation */}
         <nav
           className="absolute inset-x-0 bottom-0 z-20 flex items-center justify-around border-t border-white/10 bg-background/80 px-2 pb-[env(safe-area-inset-bottom)] pt-2 backdrop-blur-xl md:hidden"
           aria-label="Navegación principal"
@@ -175,6 +209,15 @@ function AppShell() {
           })}
         </nav>
       </div>
+
+      <CreateJobRequestDialog
+        open={createJobRequestOpen}
+        onOpenChange={(open) => (open ? openCreateJobRequest() : closeCreateJobRequest())}
+      />
+      <CreatePostDialog
+        open={createPostOpen}
+        onOpenChange={(open) => (open ? openCreatePost() : closeCreatePost())}
+      />
     </div>
   )
 }
@@ -182,7 +225,9 @@ function AppShell() {
 export function OficiaApp() {
   return (
     <UserModeProvider>
-      <AppShell />
+      <AppNavigationProvider>
+        <AppShell />
+      </AppNavigationProvider>
     </UserModeProvider>
   )
 }

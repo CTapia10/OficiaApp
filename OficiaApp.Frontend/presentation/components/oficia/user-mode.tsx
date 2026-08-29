@@ -1,29 +1,62 @@
 'use client'
 
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
 
 export type UserMode = 'client' | 'pro'
 
+const MODE_STORAGE_KEY = 'oficia_user_mode'
+const IS_PRO_STORAGE_KEY = 'oficia_is_pro'
+
 type UserModeContextValue = {
-  /** El usuario tiene el perfil profesional habilitado */
   isPro: boolean
-  /** Modo activo actual (solo cambia entre pro y client si isPro) */
   mode: UserMode
   setMode: (mode: UserMode) => void
-  /** Activa el perfil profesional y cambia al modo pro */
   activatePro: () => void
 }
 
 const UserModeContext = createContext<UserModeContextValue | null>(null)
 
+function readStoredMode(): UserMode {
+  if (typeof window === 'undefined') return 'client'
+  const stored = window.localStorage.getItem(MODE_STORAGE_KEY)
+  return stored === 'pro' ? 'pro' : 'client'
+}
+
+function readStoredIsPro(): boolean {
+  if (typeof window === 'undefined') return false
+  return window.localStorage.getItem(IS_PRO_STORAGE_KEY) === 'true'
+}
+
 export function UserModeProvider({ children }: { children: React.ReactNode }) {
-  // Todos los usuarios arrancan como clientes, sin perfil profesional.
   const [isPro, setIsPro] = useState(false)
-  const [mode, setMode] = useState<UserMode>('client')
+  const [mode, setModeState] = useState<UserMode>('client')
+  const [hydrated, setHydrated] = useState(false)
+
+  useEffect(() => {
+    setIsPro(readStoredIsPro())
+    setModeState(readStoredMode())
+    setHydrated(true)
+  }, [])
+
+  function setMode(next: UserMode) {
+    if (next === 'pro' && !isPro) return
+    setModeState(next)
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(MODE_STORAGE_KEY, next)
+    }
+  }
 
   function activatePro() {
     setIsPro(true)
-    setMode('pro')
+    setModeState('pro')
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(IS_PRO_STORAGE_KEY, 'true')
+      window.localStorage.setItem(MODE_STORAGE_KEY, 'pro')
+    }
+  }
+
+  if (!hydrated) {
+    return null
   }
 
   return (

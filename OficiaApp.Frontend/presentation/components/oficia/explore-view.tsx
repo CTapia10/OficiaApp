@@ -1,31 +1,51 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import { Search, Briefcase, MapPin, SlidersHorizontal } from 'lucide-react'
 import { useCategories } from '@/presentation/hooks/use-categories'
 import { useProfessionalsSearch } from '@/presentation/hooks/use-professionals-search'
+import { useAppNavigation } from '@/presentation/context/app-navigation'
+import { ExploreFiltersSheet } from '@/presentation/components/oficia/explore-filters-sheet'
+import { ProfessionalDetailSheet } from '@/presentation/components/oficia/professional-detail-sheet'
+import type { Professional } from '@/domain/professionals/types'
 import { cn } from '@/presentation/lib/utils'
 
 const ALL_CATEGORY_ID = 'all'
 
 export function ExploreView() {
+  const { exploreQuery, setExploreQuery, navigate, openCreateJobRequest } = useAppNavigation()
   const [activeCategoryId, setActiveCategoryId] = useState(ALL_CATEGORY_ID)
-  const [query, setQuery] = useState('')
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [maxHourlyRate, setMaxHourlyRate] = useState<number | undefined>()
+  const [selectedPro, setSelectedPro] = useState<Professional | null>(null)
 
   const categoriesQuery = useCategories()
   const professionalsQuery = useProfessionalsSearch({
     categoryId: activeCategoryId === ALL_CATEGORY_ID ? undefined : activeCategoryId,
+    maxHourlyRate,
   })
 
   const pros = useMemo(() => {
     const results = professionalsQuery.data ?? []
-    if (!query) return results
-    const q = query.toLowerCase()
+    if (!exploreQuery) return results
+    const q = exploreQuery.toLowerCase()
     return results.filter(
       (p) => p.username.toLowerCase().includes(q) || p.bio.toLowerCase().includes(q),
     )
-  }, [professionalsQuery.data, query])
+  }, [professionalsQuery.data, exploreQuery])
+
+  useEffect(() => {
+    if (exploreQuery) {
+      setActiveCategoryId(ALL_CATEGORY_ID)
+    }
+  }, [exploreQuery])
+
+  function handleContact() {
+    setSelectedPro(null)
+    navigate('solicitudes')
+    openCreateJobRequest()
+  }
 
   return (
     <div className="mx-auto h-full max-w-2xl overflow-y-auto px-4 pb-28 pt-6">
@@ -38,13 +58,12 @@ export function ExploreView() {
         </p>
       </header>
 
-      {/* Search bar */}
       <div className="flex items-center gap-2">
         <div className="flex flex-1 items-center gap-2 rounded-2xl border border-border bg-card px-4 py-3.5">
           <Search className="size-5 text-muted-foreground" />
           <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            value={exploreQuery}
+            onChange={(e) => setExploreQuery(e.target.value)}
             placeholder="¿Qué necesitás hoy?"
             className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           />
@@ -52,13 +71,16 @@ export function ExploreView() {
         <button
           type="button"
           aria-label="Filtros"
-          className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
+          onClick={() => setFiltersOpen(true)}
+          className={cn(
+            'flex size-12 shrink-0 items-center justify-center rounded-2xl border border-border bg-card text-muted-foreground transition-colors hover:text-foreground',
+            maxHourlyRate !== undefined && 'border-primary text-primary',
+          )}
         >
           <SlidersHorizontal className="size-5" />
         </button>
       </div>
 
-      {/* Category pills */}
       <div className="no-scrollbar -mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1">
         <button
           type="button"
@@ -89,7 +111,6 @@ export function ExploreView() {
         ))}
       </div>
 
-      {/* Featured pros */}
       <div className="mt-6 flex items-center justify-between">
         <h2 className="font-display text-lg font-semibold">Perfiles destacados</h2>
         <span className="text-xs text-muted-foreground">
@@ -108,6 +129,7 @@ export function ExploreView() {
           <li key={pro.profileId}>
             <button
               type="button"
+              onClick={() => setSelectedPro(pro)}
               className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card p-3 text-left transition-colors hover:border-primary/40"
             >
               <Image
@@ -139,10 +161,23 @@ export function ExploreView() {
 
         {!professionalsQuery.isLoading && !professionalsQuery.isError && pros.length === 0 && (
           <li className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-            No encontramos profesionales para “{query || 'esta categoría'}”.
+            No encontramos profesionales para “{exploreQuery || 'esta categoría'}”.
           </li>
         )}
       </ul>
+
+      <ExploreFiltersSheet
+        open={filtersOpen}
+        maxHourlyRate={maxHourlyRate}
+        onApply={setMaxHourlyRate}
+        onClose={() => setFiltersOpen(false)}
+      />
+
+      <ProfessionalDetailSheet
+        professional={selectedPro}
+        onClose={() => setSelectedPro(null)}
+        onContact={handleContact}
+      />
     </div>
   )
 }

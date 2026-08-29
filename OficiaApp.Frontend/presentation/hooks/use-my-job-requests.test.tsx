@@ -7,7 +7,6 @@ import { jobRequestsApi } from '@/infrastructure/http/job-requests-api.adapter'
 import { useAuthStore } from '@/presentation/stores/auth-store'
 import { useMyJobRequests } from './use-my-job-requests'
 
-// Replaces the real adapter (which would call `fetch`) with a fake we control per test.
 vi.mock('@/infrastructure/http/job-requests-api.adapter', () => ({
   jobRequestsApi: { getMy: vi.fn() },
 }))
@@ -23,8 +22,6 @@ const mockJobRequest: JobRequestResponse = {
   createdAt: '2026-07-29T00:00:00.000Z',
 }
 
-// useQuery needs a QueryClient available via React Context — this wrapper provides one
-// scoped to each test (fresh cache per test, no leakage between them).
 function createWrapper() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -40,18 +37,40 @@ describe('useMyJobRequests', () => {
     useAuthStore.setState({ status: 'idle', user: null })
   })
 
-  it('fetches with the given take/skip once the session is authenticated', async () => {
+  it('fetches first page with skip 0 once authenticated', async () => {
     useAuthStore.setState({ status: 'authenticated' })
     vi.mocked(jobRequestsApi.getMy).mockResolvedValue([mockJobRequest])
 
-    const { result } = renderHook(() => useMyJobRequests(5, 10), {
+    const { result } = renderHook(() => useMyJobRequests(5), {
       wrapper: createWrapper(),
     })
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
 
-    expect(jobRequestsApi.getMy).toHaveBeenCalledWith(5, 10)
-    expect(result.current.data).toEqual([mockJobRequest])
+    expect(jobRequestsApi.getMy).toHaveBeenCalledWith(5, 0)
+    expect(result.current.data?.pages[0]).toEqual([mockJobRequest])
+  })
+
+  it('requests the next skip when the last page is full', async () => {
+    useAuthStore.setState({ status: 'authenticated' })
+    const fullPage = Array.from({ length: 10 }, (_, i) => ({ ...mockJobRequest, id: `jr-${i}` }))
+    vi.mocked(jobRequestsApi.getMy).mockImplementation(async (_take, skip) =>
+      skip === 0 ? fullPage : [{ ...mockJobRequest, id: 'jr-10' }],
+    )
+
+    const { result } = renderHook(() => useMyJobRequests(), {
+      wrapper: createWrapper(),
+    })
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(result.current.hasNextPage).toBe(true)
+
+    await result.current.fetchNextPage()
+
+    await waitFor(() => expect(jobRequestsApi.getMy).toHaveBeenCalledWith(10, 10))
+    await waitFor(() =>
+      expect(result.current.data?.pages.flat().map((j) => j.id)).toContain('jr-10'),
+    )
   })
 
   it('does not call the Api while there is no authenticated session', () => {

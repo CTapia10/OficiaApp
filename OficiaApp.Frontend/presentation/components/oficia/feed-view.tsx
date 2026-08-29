@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import Image from 'next/image'
 import {
   Heart,
@@ -11,6 +11,7 @@ import {
   Loader2,
 } from 'lucide-react'
 import { useFeed } from '@/presentation/hooks/use-feed'
+import { useAppNavigation } from '@/presentation/context/app-navigation'
 import type { PostResponse } from '@/domain/posts/types'
 import { useUserMode } from './user-mode'
 import { cn } from '@/presentation/lib/utils'
@@ -30,31 +31,24 @@ function formatRelativeTime(iso: string) {
 function SocialButton({
   icon: Icon,
   label,
-  active,
-  activeClass,
-  onClick,
+  disabled,
+  title,
 }: {
   icon: typeof Heart
   label: string
-  active?: boolean
-  activeClass?: string
-  onClick?: () => void
+  disabled?: boolean
+  title?: string
 }) {
   return (
     <button
       type="button"
-      onClick={onClick}
+      disabled={disabled}
       aria-label={label}
-      aria-pressed={active}
-      className="flex flex-col items-center gap-1 outline-none"
+      title={title}
+      className="flex flex-col items-center gap-1 outline-none disabled:opacity-50"
     >
-      <span
-        className={cn(
-          'flex size-11 items-center justify-center rounded-full bg-black/35 backdrop-blur-md ring-1 ring-white/10 transition-transform active:scale-90',
-          active && activeClass,
-        )}
-      >
-        <Icon className={cn('size-6 text-white', active && 'fill-current')} />
+      <span className="flex size-11 items-center justify-center rounded-full bg-black/35 backdrop-blur-md ring-1 ring-white/10">
+        <Icon className="size-6 text-white" />
       </span>
     </button>
   )
@@ -62,9 +56,18 @@ function SocialButton({
 
 function FeedCard({ post }: { post: PostResponse }) {
   const { mode } = useUserMode()
-  const [liked, setLiked] = useState(false)
-  const [saved, setSaved] = useState(false)
+  const { navigate, setExploreQuery, openCreateJobRequest } = useAppNavigation()
   const isPro = mode === 'pro'
+
+  function handleViewProfile() {
+    setExploreQuery(post.authorUsername)
+    navigate('explorar')
+  }
+
+  function handleRequestQuote() {
+    navigate('solicitudes')
+    openCreateJobRequest()
+  }
 
   return (
     <article className="snap-start-always relative h-[100dvh] w-full shrink-0 md:h-full">
@@ -76,30 +79,35 @@ function FeedCard({ post }: { post: PostResponse }) {
         sizes="(min-width: 768px) 480px, 100vw"
         className="object-cover"
       />
-      {/* Legibility overlays */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-black/40" />
 
-      {/* Right-side social rail */}
       <div className="absolute bottom-28 right-3 z-10 flex flex-col items-center gap-4 md:bottom-32">
         <SocialButton
           icon={Heart}
           label="Me gusta"
-          active={liked}
-          activeClass="text-accent"
-          onClick={() => setLiked((v) => !v)}
+          disabled
+          title="Próximamente: interacciones sociales"
         />
-        <SocialButton icon={MessageCircle} label="Comentar" />
-        <SocialButton icon={Share2} label="Compartir" />
+        <SocialButton
+          icon={MessageCircle}
+          label="Comentar"
+          disabled
+          title="Próximamente: interacciones sociales"
+        />
+        <SocialButton
+          icon={Share2}
+          label="Compartir"
+          disabled
+          title="Próximamente: interacciones sociales"
+        />
         <SocialButton
           icon={Bookmark}
           label="Guardar"
-          active={saved}
-          activeClass="text-primary"
-          onClick={() => setSaved((v) => !v)}
+          disabled
+          title="Próximamente: interacciones sociales"
         />
       </div>
 
-      {/* Bottom info + CTA */}
       <div className="absolute inset-x-0 bottom-20 z-10 px-4 pr-20 md:bottom-24">
         <div className="flex items-center gap-3">
           <span className="flex size-11 items-center justify-center rounded-full bg-black/35 ring-2 ring-white/70">
@@ -123,6 +131,7 @@ function FeedCard({ post }: { post: PostResponse }) {
         {isPro ? (
           <button
             type="button"
+            onClick={handleViewProfile}
             className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl border border-white/25 bg-white/10 py-3.5 text-sm font-bold text-white backdrop-blur-md transition-transform active:scale-[0.98] md:max-w-xs"
           >
             <UserRound className="size-4" />
@@ -131,6 +140,7 @@ function FeedCard({ post }: { post: PostResponse }) {
         ) : (
           <button
             type="button"
+            onClick={handleRequestQuote}
             className="oficia-gradient mt-4 flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-bold text-primary-foreground shadow-lg shadow-primary/30 transition-transform active:scale-[0.98] md:max-w-xs"
           >
             Solicitar Presupuesto

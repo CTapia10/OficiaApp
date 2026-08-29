@@ -1,3 +1,8 @@
+export type CreatePostPayload = {
+  mediaUrl: string
+  caption?: string | null
+}
+
 export type PostResponse = {
   id: string
   professionalProfileId: string

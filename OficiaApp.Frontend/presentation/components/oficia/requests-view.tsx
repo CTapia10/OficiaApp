@@ -1,9 +1,12 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { Plus, Clock, Loader2 } from 'lucide-react'
+import { useAuth } from '@/presentation/hooks/use-auth'
 import { useMyJobRequests } from '@/presentation/hooks/use-my-job-requests'
 import { useCategories } from '@/presentation/hooks/use-categories'
+import { useAppNavigation } from '@/presentation/context/app-navigation'
+import { AuthGate } from '@/presentation/components/oficia/auth-gate'
 import { cn } from '@/presentation/lib/utils'
 import type { JobRequestStatus } from '@/domain/job-requests/types'
 
@@ -21,8 +24,16 @@ function formatDate(iso: string) {
 }
 
 export function RequestsView() {
-  const { data: jobRequests, isLoading, isError } = useMyJobRequests(10, 0)
+  const { user, isCheckingSession } = useAuth()
+  const jobRequestsQuery = useMyJobRequests()
   const categoriesQuery = useCategories()
+  const { openCreateJobRequest } = useAppNavigation()
+  const sentinelRef = useRef<HTMLDivElement>(null)
+
+  const requests = useMemo(
+    () => jobRequestsQuery.data?.pages.flat() ?? [],
+    [jobRequestsQuery.data],
+  )
 
   const categoryNameById = useMemo(() => {
     const map = new Map<string, string>()
@@ -32,7 +43,32 @@ export function RequestsView() {
     return map
   }, [categoriesQuery.data])
 
-  if (isLoading) {
+  useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (
+          entries[0]?.isIntersecting &&
+          jobRequestsQuery.hasNextPage &&
+          !jobRequestsQuery.isFetchingNextPage
+        ) {
+          jobRequestsQuery.fetchNextPage()
+        }
+      },
+      { rootMargin: '200px' },
+    )
+
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [
+    jobRequestsQuery.hasNextPage,
+    jobRequestsQuery.isFetchingNextPage,
+    jobRequestsQuery.fetchNextPage,
+  ])
+
+  if (isCheckingSession) {
     return (
       <div className="flex h-full items-center justify-center">
         <Loader2 className="size-8 animate-spin text-muted-foreground" />
@@ -40,15 +76,33 @@ export function RequestsView() {
     )
   }
 
-  if (isError) {
+  if (!user) {
+    return (
+      <div className="mx-auto h-full max-w-2xl overflow-y-auto px-4 pb-28 pt-6">
+        <header className="mb-5">
+          <h1 className="font-display text-2xl font-bold tracking-tight">Mis solicitudes</h1>
+          <p className="text-sm text-muted-foreground">Seguí el estado de tus pedidos</p>
+        </header>
+        <AuthGate />
+      </div>
+    )
+  }
+
+  if (jobRequestsQuery.isLoading) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <Loader2 className="size-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  if (jobRequestsQuery.isError) {
     return (
       <div className="flex h-full items-center justify-center px-6 text-center text-sm text-destructive">
         No pudimos cargar tus solicitudes. Probá de nuevo en un momento.
       </div>
     )
   }
-
-  const requests = jobRequests ?? []
 
   return (
     <div className="mx-auto h-full max-w-2xl overflow-y-auto px-4 pb-28 pt-6">
@@ -63,6 +117,7 @@ export function RequestsView() {
         </div>
         <button
           type="button"
+          onClick={openCreateJobRequest}
           className="oficia-gradient flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-sm font-bold text-primary-foreground"
         >
           <Plus className="size-4" />
@@ -106,6 +161,12 @@ export function RequestsView() {
               </div>
             </li>
           ))}
+          <div ref={sentinelRef} aria-hidden className="h-px w-full" />
+          {jobRequestsQuery.isFetchingNextPage ? (
+            <li className="flex justify-center py-4">
+              <Loader2 className="size-6 animate-spin text-muted-foreground" />
+            </li>
+          ) : null}
         </ul>
       )}
     </div>

@@ -1,5 +1,5 @@
 import type { PostsApiPort } from '@/application/ports/out/posts-api.port'
-import type { FeedCursor, FeedResult } from '@/domain/posts/types'
+import type { CreatePostPayload, FeedCursor, FeedResult, PostResponse } from '@/domain/posts/types'
 import { apiFetch } from './api-client'
 
 export const postsApi: PostsApiPort = {
@@ -12,5 +12,12 @@ export const postsApi: PostsApiPort = {
     }
     params.set('take', String(take))
     return apiFetch<FeedResult>(`/api/posts/feed?${params.toString()}`)
+  },
+
+  create(payload: CreatePostPayload): Promise<PostResponse> {
+    return apiFetch<PostResponse>('/api/posts', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
   },
 }

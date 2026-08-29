@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useMemo, useRef } from 'react'
-import { Send, Clock, LogIn, Loader2 } from 'lucide-react'
+import { Send, Clock, Loader2 } from 'lucide-react'
 import { useAuth } from '@/presentation/hooks/use-auth'
 import { useOpenJobRequests } from '@/presentation/hooks/use-open-job-requests'
+import { AuthGate } from '@/presentation/components/oficia/auth-gate'
 import type { JobRequestResponse } from '@/domain/job-requests/types'
 
 function JobCard({ job }: { job: JobRequestResponse }) {
@@ -35,24 +36,15 @@ function JobCard({ job }: { job: JobRequestResponse }) {
       <div className="mt-4 flex items-center justify-end gap-3">
         <button
           type="button"
-          className="oficia-gradient flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-primary-foreground shadow-lg shadow-primary/25 transition-transform active:scale-95"
+          disabled
+          title="Próximamente: postulación con JobApplication"
+          className="oficia-gradient flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-primary-foreground opacity-60 shadow-lg shadow-primary/25"
         >
           <Send className="size-4" />
           Enviar cotización
         </button>
       </div>
     </article>
-  )
-}
-
-function RadarAuthGate() {
-  return (
-    <div className="flex flex-col items-center gap-3 rounded-3xl border border-dashed border-border p-8 text-center">
-      <LogIn className="size-8 text-muted-foreground" />
-      <p className="text-sm text-muted-foreground">
-        Iniciá sesión desde tu perfil para ver las solicitudes de trabajo cerca tuyo.
-      </p>
-    </div>
   )
 }
 
@@ -109,7 +101,7 @@ export function RadarView() {
           Cargando…
         </div>
       ) : !user ? (
-        <RadarAuthGate />
+        <AuthGate />
       ) : (
         <>
           <div className="mb-4 flex gap-2">

@@ -10,9 +10,9 @@
 
 
 
-- **Last closed:** Fixes sprint — Radar `GET /api/job-requests/open`: server-side `take` clamp `[1, 50]` + `skip >= 0` (`JobRequestService.ClampPage`, same helper as `/my`) + `Skip`/`Take` in `JobRequestRepository.GetOpenAsync`. FE: `getOpen(take, skip)` + `useOpenJobRequests` (`useInfiniteQuery`) + sentinel in `RadarView`. Tests: `JobRequestServiceTests` (clamp) + `use-open-job-requests.test.tsx` (first page + next skip).
+- **Last closed:** Sprints 18–26 — FE interactividad: crear solicitud (`useCreateJobRequest` + dialog + client profile prompt), onboarding pro/cliente (POST adapters + `ProOnboardingForm`), auth gates Requests/Radar, Explore filtros `maxHourlyRate` + detalle pro, shell CTAs + `AppNavigationProvider`, crear post (`useCreatePost`), Requests infinite scroll, Feed CTAs navegables (social disabled), Profile settings placeholder + edit disabled. Tests: 12 Vitest green.
 
-- **Next:** Sprint 18 (write side) — formulario de creación detrás del botón "Nueva" en `RequestsView` (`POST /api/job-requests` ya existe en el backend) + `useCreateJobRequest` (mutation) + invalidación de la query `['job-requests', 'my']` al crear. Incluir FE test de la mutation/formulario.
+- **Next:** Radar apply (`JobApplication` entity + endpoints) o profile read-side (`GET` perfiles + stats reales).
 
 
 
@@ -38,19 +38,19 @@
 
 ### Frontend (Next.js — Hexagonal)
 
-- **domain/** — types only (`auth`, `posts`, `categories`, `professionals`, `job-requests`). No fetch/React/Zustand.
+- **domain/** — types only (`auth`, `posts`, `categories`, `professionals`, `job-requests`, `profiles`). No fetch/React/Zustand.
 
-- **application/ports/out/** — API port interfaces (`AuthApiPort`, `PostsApiPort`, …); **application/use-cases/** — reserved for thin orchestration.
+- **application/ports/out/** — API port interfaces (`AuthApiPort`, `PostsApiPort`, `JobRequestsApiPort`, `ClientProfileApiPort`, `ProfessionalProfileApiPort`, …); **application/use-cases/** — reserved for thin orchestration.
 
 - **infrastructure/http/** — `api-client.ts` (`apiFetch`, `credentials: 'include'`), `api-error.ts`, `*-api.adapter.ts` implementing ports.
 
-- **presentation/** — `components/`, `hooks/`, `stores/` (Zustand profile only, never JWT), `mocks/`, `lib/utils.ts`. Hooks depend on adapters, not `apiFetch` directly.
+- **presentation/** — `components/`, `hooks/`, `context/` (`app-navigation`), `stores/` (Zustand profile only, never JWT), `mocks/`, `lib/utils.ts`. Hooks depend on adapters, not `apiFetch` directly.
 
 - **app/** — Next.js App Router (delivery) + TanStack Query (`app/providers.tsx`).
 
-- **Mock vs real:** Feed real (posts adapter + `use-feed`); Requests read-side real (`use-my-job-requests` + `RequestsView`), create form still pending (backlog). Explore + Radar + Profile consume Api. Session: `GET /api/users/me` via `useAuth()`.
+- **Mock vs real:** Feed, Explore, Radar, Requests (read + create), Auth, Profile onboarding (POST), Create post — API real. Profile stats/historial/avatar still mock until `GET` perfiles. Social feed actions UI disabled (pending Domain sprint).
 
-- **Tests FE:** Vitest + Testing Library (`vitest.config.ts`, `vitest.setup.ts`, `pnpm test`). Hook tests: `use-my-job-requests.test.tsx`, `use-open-job-requests.test.tsx` (`renderHook` + `QueryClientProvider` + `vi.mock` del adapter). `allowBuilds` for `msw`/`sharp` approved in `pnpm-workspace.yaml`.
+- **Tests FE:** Vitest + Testing Library (`vitest.config.ts`, `vitest.setup.ts`, `pnpm test`). Hook tests: `use-my-job-requests`, `use-open-job-requests`, `use-create-job-request`, `use-create-post`, `use-create-client-profile`, `use-create-professional-profile`. `allowBuilds` for `msw`/`sharp` approved in `pnpm-workspace.yaml`.
 
 
 
@@ -98,8 +98,6 @@
 
 
 
-- Sprint 18: Requests (Frontend) — `POST /api/job-requests` + client's own list; wire `RequestsView` (align with PRODUCT_MAP). Include FE tests (Vitest must exist).
-
 - **Radar apply (pro):** request detail + `JobApplication` entity/endpoints; client accept → `JobContract` + `JobRequest.Accept()` (see PRODUCT_MAP).
 
 - **Radar geo:** location fields on `JobRequest` + map/list by distance.
@@ -108,11 +106,19 @@
 
 - **`IsVerified`** on `ProfessionalProfile` + Explore DTO (when a verification process exists).
 
-- Wire real `ClientProfile` / `ProfessionalProfile` into `ProfileView` (stats, history, avatar still mock).
+- **Profile read-side:** `GET /api/client-profile`, `GET /api/professional-profile`, stats agregadas; wire `ProfileView` stats/historial/avatar reales.
 
-- **Social feed interactions (new Domain concept):** `Like`/`Comment` entities + migrations + endpoints + write-path CSRF design (`.cursorrules` §5.3) before `FeedCard` like/comment/share wired. Own feature sprint.
+- **Profile PATCH:** editar perfil desde UI.
+
+- **Social feed interactions (new Domain concept):** `Like`/`Comment` entities + migrations + endpoints + write-path CSRF design (`.cursorrules` §5.3) before `FeedCard` like/comment/share wired.
 
 - **Author avatar in feed:** needs Domain field + migration + upload/storage before DTO can carry avatar.
+
+- **Explore server-side text search:** `q` query param on `GET /api/professional-profile/search` (today client-side filter only).
+
+- **Notifications:** campana + backend.
+
+- **Routing URL** (`/explorar`, `/perfil`) — optional UX polish.
 
 - **Later testing:** Api integration (`WebApplicationFactory` — cookies/JWT/CORS).
 
@@ -124,3 +130,16 @@
 
 > Agent adds open items here without blocking the current sprint. Before the next feature sprint: validate each item still applies, run a Fixes sprint (or end-of-sprint fixes block). Move resolved items to `docs/PROJECT_HISTORY.md` — do not keep `[x]` here. Priority: security > perf that scales badly > test gaps > cosmetic.
 
+- **Profile mode vs Api:** `ModeSwitch` / `isPro` persisted in `localStorage` until `GET /api/users/me` exposes profile flags (client/professional).
+
+- **Profile stats/historial/avatar:** still mock in `ProfileView` — blocked on profile `GET` endpoints (see backlog).
+
+- **Explore text search:** client-side only; server-side `q` not implemented (see backlog).
+
+- **Social feed:** like/comment/share/share UI disabled with tooltip — blocked on Domain sprint + CSRF design.
+
+- **Radar quote button:** disabled — blocked on `JobApplication` sprint.
+
+- **Edit profile:** button disabled — blocked on `PATCH` profile endpoints.
+
+- **Notifications:** toast "próximamente" only — no backend.
