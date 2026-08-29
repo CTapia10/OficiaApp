@@ -1,6 +1,7 @@
 'use client'
 
-import { MapPin, Send, Clock, LogIn } from 'lucide-react'
+import { useEffect, useMemo, useRef } from 'react'
+import { Send, Clock, LogIn, Loader2 } from 'lucide-react'
 import { useAuth } from '@/presentation/hooks/use-auth'
 import { useOpenJobRequests } from '@/presentation/hooks/use-open-job-requests'
 import type { JobRequestResponse } from '@/domain/job-requests/types'
@@ -58,8 +59,35 @@ function RadarAuthGate() {
 export function RadarView() {
   const { user, isCheckingSession } = useAuth()
   const jobRequestsQuery = useOpenJobRequests()
+  const sentinelRef = useRef<HTMLDivElement>(null)
 
-  const jobs = jobRequestsQuery.data ?? []
+  const jobs = useMemo(
+    () => jobRequestsQuery.data?.pages.flat() ?? [],
+    [jobRequestsQuery.data],
+  )
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && jobRequestsQuery.hasNextPage && !jobRequestsQuery.isFetchingNextPage) {
+          jobRequestsQuery.fetchNextPage()
+        }
+      },
+      { rootMargin: '200px' },
+    )
+
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [jobRequestsQuery.hasNextPage, jobRequestsQuery.isFetchingNextPage, jobRequestsQuery.fetchNextPage])
+
+  const openCountLabel = jobRequestsQuery.isLoading
+    ? '…'
+    : jobRequestsQuery.hasNextPage
+      ? `${jobs.length}+`
+      : String(jobs.length)
 
   return (
     <div className="mx-auto h-full max-w-2xl overflow-y-auto px-4 pb-28 pt-6">
@@ -86,9 +114,7 @@ export function RadarView() {
         <>
           <div className="mb-4 flex gap-2">
             <div className="flex-1 rounded-2xl border border-border bg-card p-3 text-center">
-              <p className="font-display text-xl font-bold text-foreground">
-                {jobRequestsQuery.isLoading ? '…' : jobs.length}
-              </p>
+              <p className="font-display text-xl font-bold text-foreground">{openCountLabel}</p>
               <p className="text-xs text-muted-foreground">Abiertas</p>
             </div>
           </div>
@@ -109,6 +135,12 @@ export function RadarView() {
             {jobs.map((job) => (
               <JobCard key={job.id} job={job} />
             ))}
+            <div ref={sentinelRef} aria-hidden className="h-px w-full" />
+            {jobRequestsQuery.isFetchingNextPage ? (
+              <div className="flex justify-center py-4">
+                <Loader2 className="size-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : null}
           </div>
         </>
       )}

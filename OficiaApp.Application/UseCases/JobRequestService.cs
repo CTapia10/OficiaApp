@@ -60,9 +60,10 @@ public class JobRequestService : IJobRequestService
         return MapToDto(jobRequest);
     }
 
-    public async Task<IEnumerable<JobRequestResponseDto>> GetOpenAsync()
+    public async Task<IEnumerable<JobRequestResponseDto>> GetOpenAsync(int take, int skip)
     {
-        var openRequests = await _jobRequestRepository.GetOpenAsync();
+        var (clampedTake, clampedSkip) = ClampPage(take, skip);
+        var openRequests = await _jobRequestRepository.GetOpenAsync(clampedTake, clampedSkip);
         return openRequests.Select(MapToDto);
     }
 
@@ -88,8 +89,15 @@ public class JobRequestService : IJobRequestService
         {
             throw new InvalidOperationException("User does not have a client profile.");
         }
-        var clampedTake = take <= 0 ? DefaultPageSize : Math.Min(take, MaxPageSize);
-        var jobRequests = await _jobRequestRepository.GetByClientProfileIdAsync(user.ClientProfile.Id, clampedTake, skip);
+        var (clampedTake, clampedSkip) = ClampPage(take, skip);
+        var jobRequests = await _jobRequestRepository.GetByClientProfileIdAsync(user.ClientProfile.Id, clampedTake, clampedSkip);
         return jobRequests.Select(MapToDto);
+    }
+
+    private static (int Take, int Skip) ClampPage(int take, int skip)
+    {
+        var clampedTake = take <= 0 ? DefaultPageSize : Math.Min(take, MaxPageSize);
+        var clampedSkip = skip < 0 ? 0 : skip;
+        return (clampedTake, clampedSkip);
     }
 }

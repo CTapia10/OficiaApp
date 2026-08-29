@@ -19,6 +19,7 @@
 - ✅ **Sprint Testing (Backend):** `OficiaApp.Domain.Tests` + `OficiaApp.Application.Tests` (xUnit, FluentAssertions, NSubstitute); `JobRequest` invariants; `UserService` register/login; `PostService` take clamp + cursor + create guards. CI workflow deferred to Open debt.
 - ✅ **Sprint Hexagonal FE + Testing rules:** `.cursorrules` §7 Testing (DoD) + checklist §8; FE restructured to `domain/` | `application/ports` | `infrastructure/http` | `presentation/` | `app/`; backend hexagonal audit OK (controllers → Ports/In only). Vitest + CI remain Open debt.
 - ✅ **Fixes sprint (Vitest + CI — close Open debt):** Vitest + Testing Library installed in `OficiaApp.Frontend` (`vitest.config.ts` jsdom env + React plugin + `@` alias; `vitest.setup.ts` for `jest-dom` matchers; `test`/`test:watch`/`test:coverage` scripts); first FE test `presentation/lib/utils.test.ts`. `.github/workflows/ci.yml` added: `backend-tests` job (`dotnet restore/build/test OficiaApp.sln`), `frontend-tests` job (`pnpm install --frozen-lockfile --ignore-scripts` + `vitest run`), both on push/PR to `main`.
+- ✅ **Fixes sprint (Radar GetOpen clamp):** `GET /api/job-requests/open` `take`/`skip` with `JobRequestService.ClampPage` `[1, 50]`; repo `Skip`/`Take`; FE `useOpenJobRequests` (`useInfiniteQuery`) + `use-open-job-requests.test.tsx`.
 
 ## Resolved debt
 
@@ -55,3 +56,7 @@
 
 ### Follow-up (pnpm allowBuilds — developer-approved)
 - [x] **`msw` + `sharp` allowBuilds approved** — `OficiaApp.Frontend/pnpm-workspace.yaml` sets `allowBuilds.msw/sharp: true`. Moved `hono` override from obsolete `package.json` `"pnpm.overrides"` (ignored by pnpm 11) into the same workspace file. `pnpm test` works without `--ignore-scripts` workaround. Open debt §5 cleared.
+
+### Fixes sprint (Radar GetOpen clamp)
+- [x] **Perf — `JobRequestRepository.GetOpenAsync` unbounded:** `GetOpenAsync(take, skip)` + `ClampPage` in `JobRequestService` (`take` `[1, 50]`, `skip < 0` → `0`); repo `Skip`/`Take` on `Pending`. FE `getOpen(take, skip)` + `useInfiniteQuery` so Radar no longer depends on an implicit default page.
+- [x] **Build — `GetByClientProfileIdAsync` missing on repo:** stale; implementation already existed. Confirmed during this sprint, not a remaining break.

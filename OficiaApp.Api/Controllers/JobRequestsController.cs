@@ -47,11 +47,11 @@ public class JobRequestsController : ControllerBase
     }
 
     [HttpGet("open")]
-    public async Task<IActionResult> GetOpen()
+    public async Task<IActionResult> GetOpen([FromQuery] int take = 10, [FromQuery] int skip = 0)
     {
         try
         {
-            var results = await _jobRequestService.GetOpenAsync();
+            var results = await _jobRequestService.GetOpenAsync(take, skip);
             return Ok(results);
         }
         catch (Exception)

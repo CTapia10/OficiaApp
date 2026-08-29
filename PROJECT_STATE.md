@@ -10,9 +10,9 @@
 
 
 
-- **Last closed:** Sprint 18 (read side) — `GET /api/job-requests/my` (Api/Application/Infra, clamp `take` + `IReadOnlyList` consistente en `IJobRequestRepository`) + FE wiring: `jobRequestsApi.getMy/create` (port+adapter), `useMyJobRequests`, `RequestsView` conectado a datos reales (categoría resuelta vía `useCategories`, badge con los 6 status reales del enum, sin `budget`/`proName`/`quotes` — dependen de `JobApplication`, backlog aparte). FE test: `use-my-job-requests.test.tsx` (primer test de hook + TanStack Query del proyecto, patrón: `renderHook` + `QueryClientProvider` wrapper + `vi.mock` del adapter, sin MSW).
+- **Last closed:** Fixes sprint — Radar `GET /api/job-requests/open`: server-side `take` clamp `[1, 50]` + `skip >= 0` (`JobRequestService.ClampPage`, same helper as `/my`) + `Skip`/`Take` in `JobRequestRepository.GetOpenAsync`. FE: `getOpen(take, skip)` + `useOpenJobRequests` (`useInfiniteQuery`) + sentinel in `RadarView`. Tests: `JobRequestServiceTests` (clamp) + `use-open-job-requests.test.tsx` (first page + next skip).
 
-- **Next:** Sprint 18 (write side) — formulario de creación detrás del botón "Nueva" en `RequestsView` (`POST /api/job-requests` ya existe en el backend) + `useCreateJobRequest` (mutation) + invalidación de la query `['job-requests', 'mine']` al crear. Incluir FE test de la mutation/formulario.
+- **Next:** Sprint 18 (write side) — formulario de creación detrás del botón "Nueva" en `RequestsView` (`POST /api/job-requests` ya existe en el backend) + `useCreateJobRequest` (mutation) + invalidación de la query `['job-requests', 'my']` al crear. Incluir FE test de la mutation/formulario.
 
 
 
@@ -50,7 +50,7 @@
 
 - **Mock vs real:** Feed real (posts adapter + `use-feed`); Requests read-side real (`use-my-job-requests` + `RequestsView`), create form still pending (backlog). Explore + Radar + Profile consume Api. Session: `GET /api/users/me` via `useAuth()`.
 
-- **Tests FE:** Vitest + Testing Library installed (`vitest.config.ts`, `vitest.setup.ts`, `pnpm test`). First test: `presentation/lib/utils.test.ts`. `allowBuilds` for `msw`/`sharp` approved in `pnpm-workspace.yaml`.
+- **Tests FE:** Vitest + Testing Library (`vitest.config.ts`, `vitest.setup.ts`, `pnpm test`). Hook tests: `use-my-job-requests.test.tsx`, `use-open-job-requests.test.tsx` (`renderHook` + `QueryClientProvider` + `vi.mock` del adapter). `allowBuilds` for `msw`/`sharp` approved in `pnpm-workspace.yaml`.
 
 
 
@@ -78,7 +78,7 @@
 
 - Login: fixed-window rate limit policy `"login"` (per IP). No account lockout entity yet.
 
-- **Perf — list endpoints:** server-side page size clamp is the required pattern for any new list endpoint. Feed (`PostService.GetFeedAsync`): `take` clamped to `[1, 50]` (`DefaultPageSize=10`, `MaxPageSize=50`).
+- **Perf — list endpoints:** server-side page size clamp is the required pattern for any new list endpoint. Feed (`PostService.GetFeedAsync`) and JobRequest lists (`GetOpenAsync`, `GetByUserIdAsync` via `ClampPage`): `take` clamped to `[1, 50]` (`DefaultPageSize=10`, `MaxPageSize=50`); `skip < 0` floors to `0`.
 
 - **Perf — Feed FE:** cursor + `useInfiniteQuery` for long lists (Radar, Requests).
 
@@ -123,10 +123,4 @@
 
 
 > Agent adds open items here without blocking the current sprint. Before the next feature sprint: validate each item still applies, run a Fixes sprint (or end-of-sprint fixes block). Move resolved items to `docs/PROJECT_HISTORY.md` — do not keep `[x]` here. Priority: security > perf that scales badly > test gaps > cosmetic.
-
-
-
-- **Perf — `JobRequestRepository.GetOpenAsync` (Radar) sin límite:** devuelve *todas* las `JobRequest` en `Pending` sin `take`/cursor (`OficiaApp.Infrastructure/Persistence/Repositories/JobRequestRepository.cs`). Con 10x de solicitudes esto es un payload sin tope (viola §6.2). No se toca en Sprint 18 (foco: lista propia del cliente, acotada por usuario) — atender cuando se aborde "Radar apply (pro)" en el backlog.
-
-- **Build roto (detectado, no bloquea foco elegido):** `IJobRequestRepository.GetByClientProfileIdAsync(Guid, int, int)` ya está declarado pero `JobRequestRepository` no lo implementa → `dotnet build` falla ahora mismo. Es justo el primer paso del Sprint 18 en curso.
 
