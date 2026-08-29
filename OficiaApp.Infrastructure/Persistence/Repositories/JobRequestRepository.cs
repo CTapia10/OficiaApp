@@ -20,12 +20,14 @@ public class JobRequestRepository : IJobRequestRepository
         await _context.JobRequests.AddAsync(jobRequest);
     }
 
-    public async Task<IReadOnlyList<JobRequest>> GetOpenAsync()
+    public async Task<IReadOnlyList<JobRequest>> GetOpenAsync(int take, int skip)
     {
         return await _context.JobRequests
             .AsNoTracking()
             .Where(j => j.Status == JobRequestStatus.Pending)
             .OrderByDescending(j => j.CreatedAt)
+            .Skip(skip)
+            .Take(take)
             .ToListAsync();
     }
 
