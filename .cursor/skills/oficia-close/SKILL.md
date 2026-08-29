@@ -1,6 +1,6 @@
 ---
 name: oficia-close
-description: Closes an approved Oficia APP sprint step with a junior-level debrief, updates PROJECT_STATE.md, and suggests a Conventional Commit. Use when the user attaches this skill or says @oficia-close, oficia-close, or the step/PR is already approved. Does not spec features or implement new code.
+description: Closes an approved Oficia APP sprint step with a junior-level debrief, updates docs/PROJECT_STATE.md, and suggests a Conventional Commit. Use when the user attaches this skill or says @oficia-close, oficia-close, or the step/PR is already approved. Does not spec features or implement new code.
 disable-model-invocation: true
 ---
 
@@ -29,7 +29,7 @@ No repetir el código entero; referenciá rutas y señalá las partes clave.
 
 ## STATE
 
-Actualizá `PROJECT_STATE.md`:
+Actualizá `docs/PROJECT_STATE.md`:
 
 1. §1 Now/Next.
 2. Constraints vivos (§3) si cambió el mapa (tests, clamp, puertos).
@@ -46,4 +46,4 @@ Terminá con el bloque copy-paste (inglés, Conventional Commits). **Sin** `git 
 git commit -m "type(scope): imperative summary"
 ```
 
-Si tocaste `PROJECT_STATE.md` (casi siempre), va en el mismo commit sugerido.
+Si tocaste `docs/PROJECT_STATE.md` (casi siempre), va en el mismo commit sugerido.

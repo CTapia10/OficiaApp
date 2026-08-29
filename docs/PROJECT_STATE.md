@@ -10,9 +10,9 @@
 
 
 
-- **Last closed:** Sprints 18–26 — FE interactividad: crear solicitud (`useCreateJobRequest` + dialog + client profile prompt), onboarding pro/cliente (POST adapters + `ProOnboardingForm`), auth gates Requests/Radar, Explore filtros `maxHourlyRate` + detalle pro, shell CTAs + `AppNavigationProvider`, crear post (`useCreatePost`), Requests infinite scroll, Feed CTAs navegables (social disabled), Profile settings placeholder + edit disabled. Tests: 12 Vitest green.
+- **Last closed:** Sprint 27 — Radar apply: `JobApplication` (Domain + endpoints apply/list/accept → `JobContract` + `JobRequest.Accept()`), FE cotización en Radar + postulaciones/aceptar en Requests. Living docs moved to `docs/` (`PROJECT_STATE`, `PRODUCT_MAP`, `PROJECT_HISTORY`). Tests: 26 Domain + 32 Application; 17 Vitest.
 
-- **Next:** Radar apply (`JobApplication` entity + endpoints) o profile read-side (`GET` perfiles + stats reales).
+- **Next:** Fixes — DataAnnotations on `CreateJobRequestDto` / `CreatePostDto` (§5.4). Then profile read-side (`GET` perfiles + stats reales).
 
 
 
@@ -22,7 +22,7 @@
 
 ### Backend (.NET 9 — Hexagonal) — audited OK
 
-- **Domain:** rich entities (`User`, profiles, `Category`, `JobRequest`, `JobContract`, `Review`, `Post`), enums, `BaseEntity.CreatedAt`. No IO. (`JobApplication` planned — see PRODUCT_MAP.)
+- **Domain:** rich entities (`User`, profiles, `Category`, `JobRequest`, `JobApplication`, `JobContract`, `Review`, `Post`), enums, `BaseEntity.CreatedAt`. No IO.
 
 - **Application:** `Ports/In` | `Ports/Out` | `UseCases/` | DTOs | `AddApplication()`. Login returns identity only (no JWT).
 
@@ -38,9 +38,9 @@
 
 ### Frontend (Next.js — Hexagonal)
 
-- **domain/** — types only (`auth`, `posts`, `categories`, `professionals`, `job-requests`, `profiles`). No fetch/React/Zustand.
+- **domain/** — types only (`auth`, `posts`, `categories`, `professionals`, `job-requests`, `job-applications`, `profiles`). No fetch/React/Zustand.
 
-- **application/ports/out/** — API port interfaces (`AuthApiPort`, `PostsApiPort`, `JobRequestsApiPort`, `ClientProfileApiPort`, `ProfessionalProfileApiPort`, …); **application/use-cases/** — reserved for thin orchestration.
+- **application/ports/out/** — API port interfaces (`AuthApiPort`, `PostsApiPort`, `JobRequestsApiPort`, `JobApplicationsApiPort`, `ClientProfileApiPort`, `ProfessionalProfileApiPort`, …); **application/use-cases/** — reserved for thin orchestration.
 
 - **infrastructure/http/** — `api-client.ts` (`apiFetch`, `credentials: 'include'`), `api-error.ts`, `*-api.adapter.ts` implementing ports.
 
@@ -48,9 +48,9 @@
 
 - **app/** — Next.js App Router (delivery) + TanStack Query (`app/providers.tsx`).
 
-- **Mock vs real:** Feed, Explore, Radar, Requests (read + create), Auth, Profile onboarding (POST), Create post — API real. Profile stats/historial/avatar still mock until `GET` perfiles. Social feed actions UI disabled (pending Domain sprint).
+- **Mock vs real:** Feed, Explore, Radar (list + apply), Requests (read + create + list/accept applications), Auth, Profile onboarding (POST), Create post — API real. Profile stats/historial/avatar still mock until `GET` perfiles. Social feed actions UI disabled (pending Domain sprint).
 
-- **Tests FE:** Vitest + Testing Library (`vitest.config.ts`, `vitest.setup.ts`, `pnpm test`). Hook tests: `use-my-job-requests`, `use-open-job-requests`, `use-create-job-request`, `use-create-post`, `use-create-client-profile`, `use-create-professional-profile`. `allowBuilds` for `msw`/`sharp` approved in `pnpm-workspace.yaml`.
+- **Tests FE:** Vitest + Testing Library (`vitest.config.ts`, `vitest.setup.ts`, `pnpm test`). Hook tests: `use-my-job-requests`, `use-open-job-requests`, `use-create-job-request`, `use-create-post`, `use-create-client-profile`, `use-create-professional-profile`, `use-create-job-application`, `use-job-applications`, `use-accept-job-application`. `allowBuilds` for `msw`/`sharp` approved in `pnpm-workspace.yaml`.
 
 
 
@@ -78,7 +78,11 @@
 
 - Login: fixed-window rate limit policy `"login"` (per IP). No account lockout entity yet.
 
-- **Perf — list endpoints:** server-side page size clamp is the required pattern for any new list endpoint. Feed (`PostService.GetFeedAsync`) and JobRequest lists (`GetOpenAsync`, `GetByUserIdAsync` via `ClampPage`): `take` clamped to `[1, 50]` (`DefaultPageSize=10`, `MaxPageSize=50`); `skip < 0` floors to `0`.
+- Living docs live under `docs/` (`PROJECT_STATE.md`, `PRODUCT_MAP.md`, `PROJECT_HISTORY.md`). Skill scripts locate the repo via `OficiaApp.sln` + `docs/PROJECT_STATE.md`.
+
+- **Perf — list endpoints:** server-side page size clamp is the required pattern for any new list endpoint. Feed (`PostService.GetFeedAsync`), JobRequest lists (`GetOpenAsync`, `GetByUserIdAsync`), and JobApplication list (`GetByJobRequestIdAsync` via `ClampPage`): `take` clamped to `[1, 50]` (`DefaultPageSize=10`, `MaxPageSize=50`); `skip < 0` floors to `0`.
+
+- **JobApplication uniqueness:** one application per `(JobRequestId, ProfessionalProfileId)`; one `JobContract` per `JobRequestId` (unique indexes).
 
 - **Perf — Feed FE:** cursor + `useInfiniteQuery` for long lists (Radar, Requests).
 
@@ -98,7 +102,7 @@
 
 
 
-- **Radar apply (pro):** request detail + `JobApplication` entity/endpoints; client accept → `JobContract` + `JobRequest.Accept()` (see PRODUCT_MAP).
+- **Fixes (antes del próximo feature):** DataAnnotations on `CreateJobRequestDto` / `CreatePostDto` (input DTOs without server-side validation — §5.4). Remaining §5 items are blocked on other backlog features, not independent fixes.
 
 - **Radar geo:** location fields on `JobRequest` + map/list by distance.
 
@@ -138,8 +142,8 @@
 
 - **Social feed:** like/comment/share/share UI disabled with tooltip — blocked on Domain sprint + CSRF design.
 
-- **Radar quote button:** disabled — blocked on `JobApplication` sprint.
-
 - **Edit profile:** button disabled — blocked on `PATCH` profile endpoints.
 
 - **Notifications:** toast "próximamente" only — no backend.
+
+- **Input DTO validation gap:** `CreateJobRequestDto` and `CreatePostDto` have no DataAnnotations (pre-existing). `CreateJobApplicationDto` in this sprint does (`[Required]` + `[Range]`).

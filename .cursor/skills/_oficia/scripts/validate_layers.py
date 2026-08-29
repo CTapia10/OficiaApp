@@ -92,6 +92,8 @@ def main(argv: list[str]) -> int:
     for rel in rels:
         if rel.startswith(".cursor/"):
             continue
+        if rel.startswith("docs/") or rel.endswith(".md") or rel == ".cursorrules":
+            continue
         layer = classify(rel)
         path = root / rel
         extra: list[str] = []

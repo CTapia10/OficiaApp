@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Print a compact snapshot of PROJECT_STATE.md (Now / Next / Open debt)."""
+"""Print a compact snapshot of docs/PROJECT_STATE.md (Now / Next / Open debt)."""
 
 from __future__ import annotations
 
@@ -46,7 +46,7 @@ def _first_bullets(section: str, limit: int = 8) -> list[str]:
 
 def main() -> int:
     root = repo_root()
-    state = Path(root / "PROJECT_STATE.md").read_text(encoding="utf-8")
+    state = Path(root / "docs" / "PROJECT_STATE.md").read_text(encoding="utf-8")
     now = _section(state, 1)
     debt = _section(state, 5)
     now_bullets = _first_bullets(now, limit=4)
@@ -66,7 +66,7 @@ def main() -> int:
         print("  - (none)")
     gate = "FIXES_FIRST" if debt_bullets else "FEATURES_OK"
     print(f"GATE={gate}")
-    print("HINT: do not dump PROJECT_STATE.md; do not read docs/PROJECT_HISTORY.md unless audit/balance.")
+    print("HINT: do not dump docs/PROJECT_STATE.md; do not read docs/PROJECT_HISTORY.md unless audit/balance.")
     return 0
 
 

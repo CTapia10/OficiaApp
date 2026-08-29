@@ -1,6 +1,6 @@
 # Oficia App — Product Map
 
-> How the product works (roles, pillars, flows). Living status lives in `PROJECT_STATE.md`; this file is the UX/domain reference.
+> How the product works (roles, pillars, flows). Living status lives in `docs/PROJECT_STATE.md`; this file is the UX/domain reference.
 
 ## Roles
 
@@ -45,7 +45,7 @@ flowchart LR
 - **`JobContract`** is created when the client **accepts** one application (agreed price + single professional link); then `JobRequest.Accept()`.
 - Do **not** reuse `JobContract` as the apply/postulate step.
 - **Location:** Domain has no lat/lng/address yet — map/distance UI is a future Radar sprint.
-- **Today:** Radar lists `GET /api/job-requests/open`; quote button has no handler yet.
+- **Today:** Radar lists `GET /api/job-requests/open`; professionals apply with `POST /api/job-applications`; clients list and accept under Mis solicitudes.
 
 ## Auth (summary)
 

@@ -11,6 +11,7 @@ public class ApplicationDbContext : DbContext
     }
 
     public DbSet<Category> Categories { get; set; }
+    public DbSet<JobApplication> JobApplications { get; set; }
     public DbSet<JobContract> JobContracts { get; set; }
     public DbSet<JobRequest> JobRequests { get; set; }
     public DbSet<ClientProfile> ClientProfiles { get; set; }
@@ -38,9 +39,33 @@ public class ApplicationDbContext : DbContext
             .HasColumnType("decimal(18,2)");
 
         modelBuilder.Entity<JobContract>()
+            .HasIndex(j => j.JobRequestId)
+            .IsUnique();
+
+        modelBuilder.Entity<JobContract>()
             .HasOne(j => j.ProfessionalProfile)
             .WithMany()
             .HasForeignKey(j => j.ProfessionalProfileId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<JobApplication>()
+            .Property(a => a.ProposedPrice)
+            .HasColumnType("decimal(18,2)");
+
+        modelBuilder.Entity<JobApplication>()
+            .HasIndex(a => new { a.JobRequestId, a.ProfessionalProfileId })
+            .IsUnique();
+
+        modelBuilder.Entity<JobApplication>()
+            .HasOne(a => a.JobRequest)
+            .WithMany()
+            .HasForeignKey(a => a.JobRequestId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<JobApplication>()
+            .HasOne(a => a.ProfessionalProfile)
+            .WithMany()
+            .HasForeignKey(a => a.ProfessionalProfileId)
             .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<ProfessionalProfile>()

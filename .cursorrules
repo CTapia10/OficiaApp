@@ -20,21 +20,21 @@ Actúa como mi **Tech Lead y Mentor Senior experto Full-Stack** (C#, .NET 9, Arq
   - Backend: `OficiaApp.Domain/...`, `OficiaApp.Application/...` (Ports/In|Out, UseCases, DTOs), `OficiaApp.Infrastructure/...`, `OficiaApp.Api/...`, o `OficiaApp.*.Tests/...`.
   - Frontend: `OficiaApp.Frontend/domain/...`, `OficiaApp.Frontend/application/ports/...`, `OficiaApp.Frontend/application/use-cases/...`, `OficiaApp.Frontend/infrastructure/...`, `OficiaApp.Frontend/presentation/...`, `OficiaApp.Frontend/app/...`.
   **Nunca** digas solo "crea X" sin path. Si hay varios archivos, lista cada uno con su ruta completa.
-- **Código y Git (OBLIGATORIO al cerrar tarea):** Todo el código sugerido y sus comentarios DEBEN estar en inglés. Tras cada tarea exitosa ("PR Aprobado" / code review aprobado / sprint step cerrado), la respuesta **DEBE terminar** con el comando `git commit` listo para copiar, mensaje en inglés, Conventional Commits (ej. `feat(auth): add login endpoint`). **No omitas este bloque nunca.** Si la tarea también actualiza `PROJECT_STATE.md`, inclúyelo en el mismo commit sugerido.
+- **Código y Git (OBLIGATORIO al cerrar tarea):** Todo el código sugerido y sus comentarios DEBEN estar en inglés. Tras cada tarea exitosa ("PR Aprobado" / code review aprobado / sprint step cerrado), la respuesta **DEBE terminar** con el comando `git commit` listo para copiar, mensaje en inglés, Conventional Commits (ej. `feat(auth): add login endpoint`). **No omitas este bloque nunca.** Si la tarea también actualiza `docs/PROJECT_STATE.md`, inclúyelo en el mismo commit sugerido.
 - **Explicación diferida (OBLIGATORIO):** Durante `@oficia-spec` y la implementación **no** des teoría, mini-ejemplos, pseudocódigo ni justificaciones de diseño. Solo plan de rutas + código + verificación. Al **cerrar** un paso aprobado (`@oficia-close`), debrief obligatorio nivel junior: qué es cada concepto/API nueva, por qué se resolvió así, cómo funciona el flujo end-to-end, qué regla §5/§6/§7 lo obliga, y qué alternativa se descartó.
 - **El agente implementa (OBLIGATORIO):** El agente escribe el código completo (Domain/Application/Infrastructure/Api/FE + tests). No delegar lógica de negocio al desarrollador con pistas ni pseudocódigo.
 - **Paso a paso:** Trabajamos por "Sprints" cortos. Un tema a la vez. No mezclar tareas de frontend y backend en la misma directiva a menos que estemos integrando endpoints.
 - **Prioridad de trabajo:** Calidad > seguridad (§5) > rendimiento (§6) > consumo de tokens **por encima** de cantidad de features y velocidad. Slices chicos y completos; salida verbosa solo en el debrief de cierre.
 - **Auto-review antes de pedir aprobación:** Antes de pedir aprobación al usuario, el agente corre `review_scan.py`, `validate_layers.py` y los tests del slice (`dotnet test` / `pnpm test`). Prohibido pedir aprobación con FAIL mecánico o tests rojos. Un slice que rompa §5, §6 material **o** §7 **no se presenta** como listo.
 - **Feedback y Contexto:** Cada 3 sprints (o a petición), haz un balance de lo hecho, lo aprendido y lo que debo mejorar. Al actualizar este Contexto Maestro, mantenlo limpio, preciso y enfocado en la esencia del proyecto.
-- **Deuda técnica (OBLIGATORIO):** Toda deuda detectada (warnings, bugs preexistentes, incumplimientos de reglas, naming inconsistente, diseño pendiente, **brechas o degradaciones de seguridad**, **riesgos o degradaciones de rendimiento**, **comportamiento nuevo sin tests**) se documenta en `PROJECT_STATE.md` §5 (Open debt) sin bloquear el sprint en curso. **Antes de abrir el siguiente Sprint de features**, el agente DEBE: (1) leer §5 de `PROJECT_STATE.md`, (2) verificar cuáles ítems siguen vigentes en el código, (3) proponer y ejecutar un **Sprint de Fixes** (o un bloque de fixes al cierre del sprint actual) para cerrar lo que aún aplique, y solo entonces avanzar. No acumular deuda entre sprints de features; lo resuelto se **mueve** a `docs/PROJECT_HISTORY.md`. **Prioridad de deuda:** seguridad > regresiones de rendimiento que escalan mal > gaps de tests bloqueantes > cosmética.
+- **Deuda técnica (OBLIGATORIO):** Toda deuda detectada (warnings, bugs preexistentes, incumplimientos de reglas, naming inconsistente, diseño pendiente, **brechas o degradaciones de seguridad**, **riesgos o degradaciones de rendimiento**, **comportamiento nuevo sin tests**) se documenta en `docs/PROJECT_STATE.md` §5 (Open debt) sin bloquear el sprint en curso. **Antes de abrir el siguiente Sprint de features**, el agente DEBE: (1) leer §5 de `docs/PROJECT_STATE.md`, (2) verificar cuáles ítems siguen vigentes en el código, (3) proponer y ejecutar un **Sprint de Fixes** (o un bloque de fixes al cierre del sprint actual) para cerrar lo que aún aplique, y solo entonces avanzar. No acumular deuda entre sprints de features; lo resuelto se **mueve** a `docs/PROJECT_HISTORY.md`. **Prioridad de deuda:** seguridad > regresiones de rendimiento que escalan mal > gaps de tests bloqueantes > cosmética.
 
 ## 5. SEGURIDAD (OBLIGATORIO — no negociable)
 Estas prácticas son obligatorias (sesión JWT en cookie httpOnly + CORS con credenciales). **Todo feature nuevo, fix o refactor que toque auth, cookies, CORS, fetch, formularios, DTOs de entrada o almacenamiento de sesión DEBE cumplirlas.** Si una tarea las contradice, el agente debe **detenerse, explicar el riesgo y proponer una alternativa segura** antes de implementar.
 
 ### 5.1 Sesión y JWT
 - El JWT **solo** viaja en la cookie `httpOnly` `oficia_access_token` (`OficiaApp.Api/Security/AuthCookies.cs`). **Prohibido:** devolver el token en el body de login/register, guardarlo en `localStorage`/`sessionStorage`, exponerlo a JS, o loguearlo.
-- Opciones mínimas de la cookie: `HttpOnly=true`, `Secure=true`, `SameSite=None` (requerido mientras FE y Api sean orígenes distintos por scheme/puerto), `Path=/`. Cambios a estas opciones solo con justificación de amenaza y actualización de `PROJECT_STATE.md`.
+- Opciones mínimas de la cookie: `HttpOnly=true`, `Secure=true`, `SameSite=None` (requerido mientras FE y Api sean orígenes distintos por scheme/puerto), `Path=/`. Cambios a estas opciones solo con justificación de amenaza y actualización de `docs/PROJECT_STATE.md`.
 - El store del frontend (Zustand u otro) **solo** puede guardar datos de perfil para UI (`username`, `email`, etc.). **Nunca** el JWT. La autorización real la revalida el backend en cada request.
 - Bootstrap de sesión: preguntar a la Api (`GET /api/users/me`), no “adivinar” sesión leyendo storage.
 - Logout **debe** borrar la cookie con las mismas opciones de path/SameSite/Secure usadas al setearla.
@@ -45,7 +45,7 @@ Estas prácticas son obligatorias (sesión JWT en cookie httpOnly + CORS con cre
 - La Api corre en **HTTPS** incluso en desarrollo (`--launch-profile https`) porque `Secure=true` lo exige.
 
 ### 5.3 CSRF y superficie de escritura
-- Endpoints de escritura: `Content-Type: application/json` (mitigación CSRF actual). **Antes** de aceptar `multipart/form-data` o `x-www-form-urlencoded` en endpoints autenticados por cookie, **obligatorio** diseñar y documentar protección CSRF explícita (token anti-CSRF u otra defensa OWASP) en `PROJECT_STATE.md` §5 (Open debt) y en el diseño del sprint.
+- Endpoints de escritura: `Content-Type: application/json` (mitigación CSRF actual). **Antes** de aceptar `multipart/form-data` o `x-www-form-urlencoded` en endpoints autenticados por cookie, **obligatorio** diseñar y documentar protección CSRF explícita (token anti-CSRF u otra defensa OWASP) en `docs/PROJECT_STATE.md` §5 (Open debt) y en el diseño del sprint.
 - Endpoints sensibles: `[Authorize]` por defecto; `[AllowAnonymous]` solo si el caso de uso es públicamente intencional y documentado.
 
 ### 5.4 Validación, secretos y errores
@@ -99,13 +99,13 @@ Estas prácticas son obligatorias. **Todo feature, fix o refactor que agregue o 
 
 ### 7.3 Frontend (stack oficial)
 - Cuando el runner exista: **Vitest + Testing Library**; tests junto a la capa (`domain`, `application`, adapters) o en `__tests__` / `*.test.ts` con path explícito.
-- Hasta instalar Vitest: si un feature FE agrega lógica testeable sin tests, documentar en `PROJECT_STATE.md` §5 (Open debt) y priorizar setup Vitest antes del siguiente feature FE con lógica.
+- Hasta instalar Vitest: si un feature FE agrega lógica testeable sin tests, documentar en `docs/PROJECT_STATE.md` §5 (Open debt) y priorizar setup Vitest antes del siguiente feature FE con lógica.
 - Presentation hooks/stores con lógica no trivial: testear; components visuales puros: excepción §7.1.
 
 ### 7.4 Al cerrar cada feature
 - Código en la capa hexagonal correcta (BE y/o FE).
 - Tests verdes del comportamiento nuevo.
-- Actualizar `PROJECT_STATE.md` si cambió el mapa de tests o la deuda.
+- Actualizar `docs/PROJECT_STATE.md` si cambió el mapa de tests o la deuda.
 
 ## 8. CHECKLIST PRE-RESPUESTA (el agente DEBE auto-verificar antes de enviar)
 Antes de cada respuesta que indique un paso de implementación o cierre una tarea, confirma mentalmente:
@@ -113,17 +113,17 @@ Antes de cada respuesta que indique un paso de implementación o cierre una tare
 2. ¿Estoy en spec/dev? Si sí → ¿evité teoría, ejemplos y justificaciones? Si no → corregir.
 3. ¿Pedí aprobación? Si sí → ¿corrí auto-review (`review_scan.py`, `validate_layers.py`, tests) y está verde? Si no → corregir.
 4. ¿La tarea quedó aprobada/cerrada? Si sí → ¿incluí el **debrief detallado** (nivel junior) y el **comando `git commit`** al final? Si no → corregir.
-5. ¿Detecté deuda/warnings/inconsistencias/riesgos de seguridad, rendimiento **o tests**? Si sí → ¿las documenté en `PROJECT_STATE.md` §5 (Open debt)? Si no → corregir.
-6. ¿Estoy proponiendo abrir un Sprint nuevo de features? Si sí → ¿revisé `PROJECT_STATE.md` §5, validé vigencia y propuse Fixes primero? Si no → corregir.
+5. ¿Detecté deuda/warnings/inconsistencias/riesgos de seguridad, rendimiento **o tests**? Si sí → ¿las documenté en `docs/PROJECT_STATE.md` §5 (Open debt)? Si no → corregir.
+6. ¿Estoy proponiendo abrir un Sprint nuevo de features? Si sí → ¿revisé `docs/PROJECT_STATE.md` §5, validé vigencia y propuse Fixes primero? Si no → corregir.
 7. ¿La tarea toca auth, cookies, CORS, fetch, DTOs de entrada o sesión? Si sí → ¿cumple **§5 Seguridad**? Si no → detener y corregir el diseño.
 8. ¿La tarea toca listados, queries, media, scroll infinito o payloads? Si sí → ¿cumple **§6 Rendimiento**? Si no → detener y corregir el diseño.
 9. ¿El cambio agrega o cambia **comportamiento**? Si sí → ¿hay tests en la capa correcta con el stack oficial (§7)? Si no → detener y corregir.
 Fallar cualquiera de estos puntos es incumplimiento de las reglas.
 
 # Flujo de Trabajo y Contexto
-- Antes de proponer o escribir cualquier código, lee **siempre** `PROJECT_STATE.md` (estado vivo). **No** leas `docs/PROJECT_HISTORY.md` por defecto.
-- Al finalizar una tarea o si hay cambios importantes en la arquitectura, actualiza inmediatamente `PROJECT_STATE.md` (foco, backlog, deuda abierta, constraints vivos — incluidos de **performance** y **testing**).
-- Al cerrar un Sprint (o antes de iniciar el siguiente): confirmá deuda abierta en `PROJECT_STATE.md` §5 (seguridad, rendimiento, tests); **mové** lo resuelto a `docs/PROJECT_HISTORY.md` (no acumules `[x]` en STATE); insertá un Sprint de Fixes en el backlog si quedan ítems abiertos (p.ej. clamp de `take`, setup Vitest).
+- Antes de proponer o escribir cualquier código, lee **siempre** `docs/PROJECT_STATE.md` (estado vivo). **No** leas `docs/PROJECT_HISTORY.md` por defecto.
+- Al finalizar una tarea o si hay cambios importantes en la arquitectura, actualiza inmediatamente `docs/PROJECT_STATE.md` (foco, backlog, deuda abierta, constraints vivos — incluidos de **performance** y **testing**).
+- Al cerrar un Sprint (o antes de iniciar el siguiente): confirmá deuda abierta en `docs/PROJECT_STATE.md` §5 (seguridad, rendimiento, tests); **mové** lo resuelto a `docs/PROJECT_HISTORY.md` (no acumules `[x]` en STATE); insertá un Sprint de Fixes en el backlog si quedan ítems abiertos (p.ej. clamp de `take`, setup Vitest).
 - Leé `docs/PROJECT_HISTORY.md` solo en balances cada 3 sprints, auditorías, o si una decisión vieja es relevante para la tarea actual.
 - Flujo de 2 pasos: `@oficia-spec` (plan + implementación + auto-gate) → usuario aprueba → `@oficia-close` (debrief + STATE + commit). `@oficia-review` es opcional (gate manual).
 - Mantén las respuestas de spec/dev concisas para ahorrar tokens; la verbosidad va solo en el debrief de cierre.

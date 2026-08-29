@@ -1,13 +1,14 @@
 'use client'
 
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Send, Clock, Loader2 } from 'lucide-react'
 import { useAuth } from '@/presentation/hooks/use-auth'
 import { useOpenJobRequests } from '@/presentation/hooks/use-open-job-requests'
 import { AuthGate } from '@/presentation/components/oficia/auth-gate'
+import { ApplyJobDialog } from '@/presentation/components/oficia/apply-job-dialog'
 import type { JobRequestResponse } from '@/domain/job-requests/types'
 
-function JobCard({ job }: { job: JobRequestResponse }) {
+function JobCard({ job, onApply }: { job: JobRequestResponse; onApply: () => void }) {
   const postedAt = new Date(job.createdAt).toLocaleDateString('es-AR', {
     day: '2-digit',
     month: 'short',
@@ -36,9 +37,8 @@ function JobCard({ job }: { job: JobRequestResponse }) {
       <div className="mt-4 flex items-center justify-end gap-3">
         <button
           type="button"
-          disabled
-          title="Próximamente: postulación con JobApplication"
-          className="oficia-gradient flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-primary-foreground opacity-60 shadow-lg shadow-primary/25"
+          onClick={onApply}
+          className="oficia-gradient flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-primary-foreground shadow-lg shadow-primary/25"
         >
           <Send className="size-4" />
           Enviar cotización
@@ -52,6 +52,7 @@ export function RadarView() {
   const { user, isCheckingSession } = useAuth()
   const jobRequestsQuery = useOpenJobRequests()
   const sentinelRef = useRef<HTMLDivElement>(null)
+  const [applyJob, setApplyJob] = useState<JobRequestResponse | null>(null)
 
   const jobs = useMemo(
     () => jobRequestsQuery.data?.pages.flat() ?? [],
@@ -125,7 +126,7 @@ export function RadarView() {
             )}
 
             {jobs.map((job) => (
-              <JobCard key={job.id} job={job} />
+              <JobCard key={job.id} job={job} onApply={() => setApplyJob(job)} />
             ))}
             <div ref={sentinelRef} aria-hidden className="h-px w-full" />
             {jobRequestsQuery.isFetchingNextPage ? (
@@ -134,6 +135,15 @@ export function RadarView() {
               </div>
             ) : null}
           </div>
+          {applyJob ? (
+            <ApplyJobDialog
+              job={applyJob}
+              open
+              onOpenChange={(open) => {
+                if (!open) setApplyJob(null)
+              }}
+            />
+          ) : null}
         </>
       )}
     </div>

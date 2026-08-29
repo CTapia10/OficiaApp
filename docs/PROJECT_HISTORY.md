@@ -1,7 +1,7 @@
 # Oficia App — Project History (cold memory)
 
 > Do **not** load this file by default. Read only for audits, every-3-sprints balance, or when an old decision is relevant.
-> On sprint close: append 3–5 bullets max; move resolved debt here; keep `PROJECT_STATE.md` free of `[x]` clutter.
+> On sprint close: append 3–5 bullets max; move resolved debt here; keep `docs/PROJECT_STATE.md` free of `[x]` clutter.
 
 ## Sprint log
 
@@ -20,6 +20,7 @@
 - ✅ **Sprint Hexagonal FE + Testing rules:** `.cursorrules` §7 Testing (DoD) + checklist §8; FE restructured to `domain/` | `application/ports` | `infrastructure/http` | `presentation/` | `app/`; backend hexagonal audit OK (controllers → Ports/In only). Vitest + CI remain Open debt.
 - ✅ **Fixes sprint (Vitest + CI — close Open debt):** Vitest + Testing Library installed in `OficiaApp.Frontend` (`vitest.config.ts` jsdom env + React plugin + `@` alias; `vitest.setup.ts` for `jest-dom` matchers; `test`/`test:watch`/`test:coverage` scripts); first FE test `presentation/lib/utils.test.ts`. `.github/workflows/ci.yml` added: `backend-tests` job (`dotnet restore/build/test OficiaApp.sln`), `frontend-tests` job (`pnpm install --frozen-lockfile --ignore-scripts` + `vitest run`), both on push/PR to `main`.
 - ✅ **Fixes sprint (Radar GetOpen clamp):** `GET /api/job-requests/open` `take`/`skip` with `JobRequestService.ClampPage` `[1, 50]`; repo `Skip`/`Take`; FE `useOpenJobRequests` (`useInfiniteQuery`) + `use-open-job-requests.test.tsx`.
+- ✅ **Sprint 27 — Radar apply + docs:** Domain `JobApplication` / `JobApplicationStatus`; `JobApplicationService` (apply, list clamp, accept → `JobContract` + `JobRequest.Accept()` + reject siblings); `JobApplicationsController` (`POST/GET /api/job-applications`, `POST {id}/accept`); FE hexagonal port/adapter/hooks + Radar quote dialog + Requests accept. Living docs moved to `docs/`. Tests: Domain 26, Application 32, Vitest 17.
 
 ## Resolved debt
 
@@ -47,12 +48,12 @@
 ### Fixes sprint (post-Sprint 17 — close Open debt)
 - [x] **Perf + DoS — Feed `take` unbounded:** `PostService.GetFeedAsync` now clamps server-side to `[1, MaxPageSize=50]` (`DefaultPageSize=10` on invalid/zero/negative input). `PostsController.GetFeed` unchanged (clamp lives in Application, not Api, so any future caller gets the same guarantee).
 - [x] **`PostResponseDto` author snapshot:** added `AuthorUsername` (from `User.Username`) and `AuthorPrimaryCategory` (first `ProfessionalProfile.Category.Name`, nullable) to `PostResponseDto`. `PostRepository.GetFeedAsync` now does `Include(ProfessionalProfile).ThenInclude(User)` + `Include(ProfessionalProfile).ThenInclude(Categories)` (single query, no N+1) instead of hydrating per-card. `FeedCard` (`OficiaApp.Frontend/components/oficia/feed-view.tsx`) shows real username + rubro instead of the "Profesional" placeholder.
-- [x] **Split from the debt item:** social counters (likes/comments/shares) and author avatar were **not** implemented — no `Like`/`Comment` entities or avatar field exist in Domain; building them is new feature scope (new entities, migrations, endpoints, CSRF design for likes/comments as writes), not a fix. Moved to `PROJECT_STATE.md` §4 Backlog as explicit future sprints instead of lingering as vague Open debt.
+- [x] **Split from the debt item:** social counters (likes/comments/shares) and author avatar were **not** implemented — no `Like`/`Comment` entities or avatar field exist in Domain; building them is new feature scope (new entities, migrations, endpoints, CSRF design for likes/comments as writes), not a fix. Moved to `docs/PROJECT_STATE.md` §4 Backlog as explicit future sprints instead of lingering as vague Open debt.
 
 ### Fixes sprint (Vitest + CI — close Open debt)
 - [x] **Vitest + Testing Library installed** — `OficiaApp.Frontend/vitest.config.ts` (jsdom, `@vitejs/plugin-react`, `@` alias mirroring `tsconfig.json`), `vitest.setup.ts` (`@testing-library/jest-dom/vitest`), `package.json` scripts (`test`, `test:watch`, `test:coverage`). First real test: `presentation/lib/utils.test.ts` (`cn` merge behavior).
 - [x] **CI added** — `.github/workflows/ci.yml`: `backend-tests` (`dotnet restore/build/test OficiaApp.sln`, Release, .NET 9 SDK pinned) + `frontend-tests` (pnpm via `pnpm/action-setup`, Node 22, `vitest run`), triggered on `push`/`pull_request` to `main`.
-- [x] **`ERR_PNPM_IGNORED_BUILDS` workaround** — local `pnpm-lock.yaml` had pre-existing pending install scripts (`msw@2.14.6`, `sharp@0.34.5`, unrelated to this fix) that make `pnpm run <script>` exit non-zero until a human runs `pnpm approve-builds`. Not auto-approved (supply-chain decision). CI and local runs instead use `pnpm exec vitest run` / `pnpm install --ignore-scripts`, which don't need those scripts. Approving (or rejecting) them locally remains a deliberate developer action — tracked as cosmetic/DX debt in `PROJECT_STATE.md` §5.
+- [x] **`ERR_PNPM_IGNORED_BUILDS` workaround** — local `pnpm-lock.yaml` had pre-existing pending install scripts (`msw@2.14.6`, `sharp@0.34.5`, unrelated to this fix) that make `pnpm run <script>` exit non-zero until a human runs `pnpm approve-builds`. Not auto-approved (supply-chain decision). CI and local runs instead use `pnpm exec vitest run` / `pnpm install --ignore-scripts`, which don't need those scripts. Approving (or rejecting) them locally remains a deliberate developer action — tracked as cosmetic/DX debt in `docs/PROJECT_STATE.md` §5.
 
 ### Follow-up (pnpm allowBuilds — developer-approved)
 - [x] **`msw` + `sharp` allowBuilds approved** — `OficiaApp.Frontend/pnpm-workspace.yaml` sets `allowBuilds.msw/sharp: true`. Moved `hono` override from obsolete `package.json` `"pnpm.overrides"` (ignored by pnpm 11) into the same workspace file. `pnpm test` works without `--ignore-scripts` workaround. Open debt §5 cleared.
@@ -60,3 +61,7 @@
 ### Fixes sprint (Radar GetOpen clamp)
 - [x] **Perf — `JobRequestRepository.GetOpenAsync` unbounded:** `GetOpenAsync(take, skip)` + `ClampPage` in `JobRequestService` (`take` `[1, 50]`, `skip < 0` → `0`); repo `Skip`/`Take` on `Pending`. FE `getOpen(take, skip)` + `useInfiniteQuery` so Radar no longer depends on an implicit default page.
 - [x] **Build — `GetByClientProfileIdAsync` missing on repo:** stale; implementation already existed. Confirmed during this sprint, not a remaining break.
+
+### Sprint 27 — Radar apply
+- [x] **Radar quote button:** enabled — `ApplyJobDialog` + `POST /api/job-applications`; client lists/accepts under Mis solicitudes. Application ≠ contract (PRODUCT_MAP).
+- [x] **Living docs location:** `PROJECT_STATE.md` moved to `docs/` alongside `PRODUCT_MAP.md` and `PROJECT_HISTORY.md`; skill scripts + `.cursorrules` updated.

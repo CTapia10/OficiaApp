@@ -1,14 +1,17 @@
 'use client'
 
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Plus, Clock, Loader2 } from 'lucide-react'
 import { useAuth } from '@/presentation/hooks/use-auth'
 import { useMyJobRequests } from '@/presentation/hooks/use-my-job-requests'
+import { useJobApplications } from '@/presentation/hooks/use-job-applications'
+import { useAcceptJobApplication } from '@/presentation/hooks/use-accept-job-application'
 import { useCategories } from '@/presentation/hooks/use-categories'
 import { useAppNavigation } from '@/presentation/context/app-navigation'
 import { AuthGate } from '@/presentation/components/oficia/auth-gate'
 import { cn } from '@/presentation/lib/utils'
 import type { JobRequestStatus } from '@/domain/job-requests/types'
+import { ApiError } from '@/infrastructure/http/api-error'
 
 const STATUS_META: Record<JobRequestStatus, { label: string; className: string }> = {
   Pending: { label: 'Pendiente', className: 'bg-primary/15 text-primary' },
@@ -23,12 +26,84 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })
 }
 
+function formatPrice(value: number) {
+  return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(value)
+}
+
+function fieldError(error: unknown): string | null {
+  if (error instanceof ApiError) return error.message
+  if (error instanceof Error) return error.message
+  return null
+}
+
+function RequestApplicationsPanel({ jobRequestId }: { jobRequestId: string }) {
+  const applicationsQuery = useJobApplications(jobRequestId)
+  const acceptMutation = useAcceptJobApplication()
+
+  if (applicationsQuery.isLoading) {
+    return (
+      <div className="mt-3 flex justify-center py-2">
+        <Loader2 className="size-4 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  if (applicationsQuery.isError) {
+    return (
+      <p className="mt-3 text-xs text-destructive">
+        {fieldError(applicationsQuery.error) ?? 'No pudimos cargar las postulaciones.'}
+      </p>
+    )
+  }
+
+  const applications = applicationsQuery.data ?? []
+  if (applications.length === 0) {
+    return <p className="mt-3 text-xs text-muted-foreground">Todavía no hay postulaciones.</p>
+  }
+
+  return (
+    <ul className="mt-3 flex flex-col gap-2">
+      {applications.map((application) => (
+        <li
+          key={application.id}
+          className="flex items-center justify-between gap-3 rounded-xl border border-border bg-background px-3 py-2"
+        >
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium">
+              {application.professionalUsername || 'Profesional'}
+            </p>
+            <p className="text-xs text-muted-foreground">{formatPrice(application.proposedPrice)}</p>
+          </div>
+          {application.status === 'Pending' ? (
+            <button
+              type="button"
+              disabled={acceptMutation.isPending}
+              onClick={() => acceptMutation.mutate(application.id)}
+              className="oficia-gradient shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold text-primary-foreground disabled:opacity-60"
+            >
+              {acceptMutation.isPending ? '…' : 'Aceptar'}
+            </button>
+          ) : (
+            <span className="text-xs text-muted-foreground">{application.status}</span>
+          )}
+        </li>
+      ))}
+      {acceptMutation.error ? (
+        <li className="text-xs text-destructive">
+          {fieldError(acceptMutation.error) ?? 'No pudimos aceptar la postulación.'}
+        </li>
+      ) : null}
+    </ul>
+  )
+}
+
 export function RequestsView() {
   const { user, isCheckingSession } = useAuth()
   const jobRequestsQuery = useMyJobRequests()
   const categoriesQuery = useCategories()
   const { openCreateJobRequest } = useAppNavigation()
   const sentinelRef = useRef<HTMLDivElement>(null)
+  const [expandedRequestId, setExpandedRequestId] = useState<string | null>(null)
 
   const requests = useMemo(
     () => jobRequestsQuery.data?.pages.flat() ?? [],
@@ -155,10 +230,26 @@ export function RequestsView() {
                 </span>
               </div>
 
-              <div className="mt-3 flex items-center gap-1 text-xs text-muted-foreground">
-                <Clock className="size-3.5" />
-                {formatDate(r.createdAt)}
+              <div className="mt-3 flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <Clock className="size-3.5" />
+                  {formatDate(r.createdAt)}
+                </span>
+                {r.status === 'Pending' ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setExpandedRequestId((current) => (current === r.id ? null : r.id))
+                    }
+                    className="font-semibold text-primary"
+                  >
+                    {expandedRequestId === r.id ? 'Ocultar postulaciones' : 'Ver postulaciones'}
+                  </button>
+                ) : null}
               </div>
+              {r.status === 'Pending' && expandedRequestId === r.id ? (
+                <RequestApplicationsPanel jobRequestId={r.id} />
+              ) : null}
             </li>
           ))}
           <div ref={sentinelRef} aria-hidden className="h-px w-full" />
