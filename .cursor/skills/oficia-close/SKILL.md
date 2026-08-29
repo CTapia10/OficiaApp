@@ -1,12 +1,12 @@
 ---
 name: oficia-close
-description: Closes an approved Oficia APP sprint step by updating PROJECT_STATE.md and suggesting a Conventional Commit. Use when the user attaches this skill or says @oficia-close, oficia-close, or the step/PR is already approved. Does not spec features or re-review code.
+description: Closes an approved Oficia APP sprint step with a junior-level debrief, updates PROJECT_STATE.md, and suggests a Conventional Commit. Use when the user attaches this skill or says @oficia-close, oficia-close, or the step/PR is already approved. Does not spec features or implement new code.
 disable-model-invocation: true
 ---
 
 # Oficia Close
 
-Solo si el paso ya está **aprobado** (`@oficia-review` o el usuario lo declara). No re-reviewees. No specs trabajo nuevo.
+Solo si el paso ya está **aprobado** (`@oficia-spec` auto-gate verde + usuario aprueba, o el usuario lo declara). No re-reviewees. No specs trabajo nuevo. No implementes código nuevo.
 
 ## Primera acción
 
@@ -15,6 +15,17 @@ python .cursor/skills/_oficia/scripts/check_state.py
 ```
 
 Fallback: `py -3`. Usá la salida para editar STATE con precisión.
+
+## Debrief
+
+**Único lugar del ciclo donde la respuesta puede ser larga.** Explicá como si el desarrollador fuera junior intentando aprender. Por cada pieza implementada en el slice cerrado:
+
+1. **Qué es** — concepto, API, atributo o patrón nuevo (si aplica).
+2. **Por qué así** — decisión de diseño y qué regla §5/§6/§7 la obliga.
+3. **Cómo funciona** — flujo end-to-end (request → capa → response, o hook → adapter → API).
+4. **Alternativa descartada** — qué otra opción existía y por qué no se eligió.
+
+No repetir el código entero; referenciá rutas y señalá las partes clave.
 
 ## STATE
 

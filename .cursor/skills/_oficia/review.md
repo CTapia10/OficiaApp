@@ -1,6 +1,8 @@
 # Review gate
 
-Correr `review_scan.py` y `validate_layers.py` primero. Lo mecánico no reemplaza el juicio de mentor.
+Correr `review_scan.py` y `validate_layers.py` primero. Lo mecánico no reemplaza el juicio de §5/§6/§7.
+
+**Contexto:** En el flujo normal de 2 pasos, `@oficia-spec` corre este gate como auto-review antes de pedir aprobación. Este documento aplica también a `@oficia-review` (gate manual opcional). La teoría/detalle va solo en `@oficia-close`.
 
 ## 🔴 Bloqueantes (no aprobar)
 
@@ -17,8 +19,8 @@ Correr `review_scan.py` y `validate_layers.py` primero. Lo mecánico no reemplaz
 
 - Cosmética, comentarios, orden de imports.
 
-## Mentoría en review
+## Auto-review (código del agente)
 
-No reescribas la lógica de negocio por ellos. Señalá el invariante roto y pedí el arreglo. Visual pura: sí podés mostrar el JSX/Tailwind.
+Si hay hallazgo 🔴 en código que escribió el agente → corregir y re-correr scripts en el mismo turno. No delegar el arreglo. Sin teoría en el veredicto.
 
 Aprobación = "PR Aprobado" / paso cerrado → el usuario adjunta `@oficia-close` (no ejecutes close acá).

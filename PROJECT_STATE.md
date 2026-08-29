@@ -88,9 +88,9 @@
 
 - **FE hexagonal:** presentation must not call `apiFetch` directly; use `infrastructure/http/*-api.adapter.ts` implementing `application/ports/out/*`.
 
+- **Agent workflow (2 steps):** `@oficia-spec` (plan + implementation + auto-gate: `dotnet test` / `pnpm test` + `review_scan.py` + `validate_layers.py`) → user approves → `@oficia-close` (junior debrief + STATE + commit). `@oficia-review` is optional (manual gate).
+- **Agent implements the code;** teaching deferred to `@oficia-close` debrief. During spec/dev: no theory, no pseudocode — only plan, paths, and code.
 - Agent git close-out: suggest `git commit -m "..."` only (Conventional Commits, English). **Do not** include `git add`; developer stages.
-
-- **Agent skills (explicit):** `@oficia-spec` (nuevo slice), `@oficia-review` (gate), `@oficia-close` (STATE + commit). Shared scripts: `python .cursor/skills/_oficia/scripts/check_state.py` (no dump this file). Does not replace `.cursorrules`. Do not attach `@oficia-dev` (removed).
 
 
 
